@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Kyro Outreach — self-contained, tenant-scoped application server.
 
-Uses SQLite for a local/deployable single-node installation. Resend is an optional
-provider adapter; demo workspaces never make a network send.
+Local installations use SQLite; Vercel deployments use managed PostgreSQL through a
+small compatibility adapter. Resend is optional; demo workspaces never send real email.
 """
 from __future__ import annotations
 
@@ -47,18 +47,25 @@ def env_file() -> None:
 
 env_file()
 DATA_DIR = ROOT / "data"
+VERCEL_RUNTIME = os.getenv("VERCEL", "").lower() in {"1", "true"}
+DATABASE_URL = (os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL") or
+                os.getenv("POSTGRES_PRISMA_URL") or "").strip()
 DB_PATH = Path(os.getenv("DATABASE_PATH", str(DATA_DIR / "kyro.sqlite3")))
-DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+# Vercel's deployment filesystem is read-only; SQLite remains the local-development default.
+if not VERCEL_RUNTIME and not DATABASE_URL:
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 MAX_DAILY_SENDS = 10
 RECENT_CONTACT_DAYS = 30
 SESSION_DAYS = 7
-DEMO_ENABLED = os.getenv("KYRO_DEMO_ENABLED", "true").lower() in {"1", "true", "yes", "on"}
+DEMO_DEFAULT = "false" if VERCEL_RUNTIME else "true"
+DEMO_ENABLED = os.getenv("KYRO_DEMO_ENABLED", DEMO_DEFAULT).lower() in {"1", "true", "yes", "on"}
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "").strip()
 RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "").strip()
 APP_URL = os.getenv("APP_URL", "").strip()
 CRON_SECRET = os.getenv("CRON_SECRET", "").strip()
 REPLY_WEBHOOK_SECRET = os.getenv("REPLY_WEBHOOK_SECRET", "").strip()
-COOKIE_SECURE = os.getenv("COOKIE_SECURE", "false").lower() in {"1", "true", "yes", "on"}
+COOKIE_SECURE_DEFAULT = "true" if VERCEL_RUNTIME else "false"
+COOKIE_SECURE = os.getenv("COOKIE_SECURE", COOKIE_SECURE_DEFAULT).lower() in {"1", "true", "yes", "on"}
 SERVICES = ["Graphic Design", "Branding", "Meta Ads", "TikTok Ads"]
 PROSPECT_STATUSES = ["New", "Contacted", "Replied", "Interested", "Not Interested", "Suppressed"]
 CAMPAIGN_STATUSES = ["Draft", "Active", "Paused", "Completed"]
@@ -179,8 +186,99 @@ def active_reservations_today(c: sqlite3.Connection, user_id: str, tz_name: str,
     return count
 
 
-def db_connect() -> sqlite3.Connection:
-    c = sqlite3.connect(DB_PATH, timeout=15, isolation_level=None)
+class PostgresConnection:
+    """Small SQLite-compatible adapter for the PostgreSQL statements used by Kyro.
+
+    Keeping the application SQL parameterized with ``?`` lets local SQLite remain
+    dependency-free while Vercel uses a pooled managed PostgreSQL connection.
+    """
+    is_postgres = True
+
+    def __init__(self, dsn: str):
+        try:
+            import psycopg
+            from psycopg.rows import dict_row
+        except ImportError as exc:
+            raise RuntimeError("PostgreSQL is configured but psycopg is not installed.") from exc
+        self._psycopg = psycopg
+        self._raw = psycopg.connect(dsn, connect_timeout=10, autocommit=True, row_factory=dict_row)
+
+    @property
+    def in_transaction(self) -> bool:
+        return bool(self._raw and self._raw.info.transaction_status != self._psycopg.pq.TransactionStatus.IDLE)
+
+    @staticmethod
+    def _sql(statement: str) -> str:
+        sql = statement.replace("BEGIN IMMEDIATE", "BEGIN")
+        sql = re.sub(r"\s+COLLATE\s+NOCASE\b", "", sql, flags=re.IGNORECASE)
+        # SQLite's scalar MAX(a,b) becomes PostgreSQL's GREATEST(a,b).
+        sql = re.sub(r"MAX\(([^()]+)\)", lambda m: "GREATEST(" + m.group(1) + ")"
+                     if "," in m.group(1) else "MAX(" + m.group(1) + ")", sql, flags=re.IGNORECASE)
+        return sql.replace("?", "%s")
+
+    def execute(self, statement: str, parameters: tuple | list = ()):
+        if statement.lstrip().upper().startswith("PRAGMA"):
+            return _NoopCursor()
+        try:
+            return self._raw.execute(self._sql(statement), parameters)
+        except self._psycopg.IntegrityError as exc:
+            # Existing route logic intentionally catches sqlite3.IntegrityError.
+            raise sqlite3.IntegrityError(str(exc)) from None
+
+    def executescript(self, script: str) -> None:
+        for statement in script.split(";"):
+            statement = statement.strip()
+            if statement and not statement.upper().startswith("PRAGMA"):
+                self.execute(statement)
+
+    def close(self) -> None:
+        if self._raw is not None:
+            self._raw.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        try:
+            if self.in_transaction:
+                self.execute("ROLLBACK" if exc_type else "COMMIT")
+        finally:
+            self.close()
+
+
+class _NoopCursor:
+    rowcount = -1
+
+    @staticmethod
+    def fetchone():
+        return None
+
+    @staticmethod
+    def fetchall():
+        return []
+
+
+def acquire_transaction_lock(connection, key: str) -> None:
+    """Serialize quota/auth critical sections across independent serverless workers."""
+    if getattr(connection, "is_postgres", False):
+        connection.execute("SELECT pg_advisory_xact_lock(hashtextextended(?, 0))", (key,))
+
+
+class ClosingSQLiteConnection(sqlite3.Connection):
+    """Match the PostgreSQL adapter's context-manager close behavior for tests/local use."""
+    def __exit__(self, exc_type, exc_value, traceback):
+        try:
+            return super().__exit__(exc_type, exc_value, traceback)
+        finally:
+            self.close()
+
+
+def db_connect():
+    if DATABASE_URL:
+        return PostgresConnection(DATABASE_URL)
+    if VERCEL_RUNTIME:
+        raise RuntimeError("DATABASE_URL is required on Vercel; SQLite is local-only and not durable there.")
+    c = sqlite3.connect(DB_PATH, timeout=15, isolation_level=None, factory=ClosingSQLiteConnection)
     c.row_factory = sqlite3.Row
     c.execute("PRAGMA foreign_keys = ON")
     c.execute("PRAGMA busy_timeout = 15000")
@@ -189,7 +287,12 @@ def db_connect() -> sqlite3.Connection:
 
 def init_db() -> None:
     with db_connect() as c:
-        c.executescript("""
+        postgres = getattr(c, "is_postgres", False)
+        if postgres:
+            c.execute("BEGIN")
+            acquire_transaction_lock(c, "kyro-schema-v1")
+        try:
+            c.executescript("""
         PRAGMA journal_mode=WAL;
         CREATE TABLE IF NOT EXISTS users (
           id TEXT PRIMARY KEY, workspace_id TEXT NOT NULL, email TEXT NOT NULL UNIQUE,
@@ -302,14 +405,20 @@ def init_db() -> None:
           csrf_token TEXT NOT NULL, expires_at TEXT NOT NULL, created_at TEXT NOT NULL
         );
         CREATE TABLE IF NOT EXISTS rate_limits (
-          key TEXT PRIMARY KEY, count INTEGER NOT NULL, window_start REAL NOT NULL
+          key TEXT PRIMARY KEY, count INTEGER NOT NULL, window_start DOUBLE PRECISION NOT NULL
         );
         CREATE TABLE IF NOT EXISTS provider_events (
           id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
           provider_event_id TEXT NOT NULL, event_type TEXT NOT NULL, created_at TEXT NOT NULL,
           UNIQUE(user_id,provider_event_id)
         );
-        """)
+            """)
+            if postgres:
+                c.execute("COMMIT")
+        except Exception:
+            if c.in_transaction:
+                c.execute("ROLLBACK")
+            raise
 
 
 class APIError(Exception):
@@ -643,6 +752,7 @@ def send_draft(user: sqlite3.Row, draft_id: str, idempotency_key: str | None = N
     tz_name = "Africa/Nairobi"
     try:
         c.execute("BEGIN IMMEDIATE")
+        acquire_transaction_lock(c, "send-quota:" + user_id)
         draft = c.execute("SELECT * FROM email_drafts WHERE id=? AND user_id=?", (draft_id, user_id)).fetchone()
         if not draft:
             raise APIError(404, "Draft not found.", "not_found")
@@ -726,7 +836,9 @@ def send_draft(user: sqlite3.Row, draft_id: str, idempotency_key: str | None = N
             old = c.execute("SELECT * FROM email_sends WHERE user_id=? AND draft_id=? AND status='sent'", (user_id, draft_id)).fetchone()
             if old:
                 c.execute("COMMIT")
-                return {"sent": True, "duplicate": True, "send_id": old["id"], "sent_at": old["sent_at"], "message": "This send was already completed."}
+                result = {"sent": True, "duplicate": True, "send_id": old["id"], "sent_at": old["sent_at"], "message": "This send was already completed."}
+                c.close()
+                return result
         if reservation and reservation["status"] == "reserved":
             created = datetime.fromisoformat(reservation["updated_at"])
             if created.tzinfo is None:
@@ -802,6 +914,7 @@ def send_draft(user: sqlite3.Row, draft_id: str, idempotency_key: str | None = N
         fail = db_connect()
         try:
             fail.execute("BEGIN IMMEDIATE")
+            acquire_transaction_lock(fail, "send-quota:" + user_id)
             fail.execute("UPDATE send_reservations SET status='released',updated_at=? WHERE id=?", (iso_now(), reservation_id))
             fail.execute("UPDATE email_drafts SET status='Failed',updated_at=? WHERE id=? AND user_id=? AND status='Sending'", (iso_now(), draft_id, user_id))
             fail.execute("INSERT INTO email_sends(id,user_id,prospect_id,campaign_id,draft_id,message_id,recipient,subject,sent_at,status,provider_status,error_message,idempotency_key) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -819,6 +932,7 @@ def send_draft(user: sqlite3.Row, draft_id: str, idempotency_key: str | None = N
     finish = db_connect()
     try:
         finish.execute("BEGIN IMMEDIATE")
+        acquire_transaction_lock(finish, "send-quota:" + user_id)
         # A successful send increments exactly once under the DB write lock.
         was_sent = finish.execute("SELECT id FROM email_sends WHERE user_id=? AND draft_id=? AND status='sent'", (user_id, draft_id)).fetchone()
         if was_sent:
@@ -998,10 +1112,12 @@ def create_prospect(c: sqlite3.Connection, user_id: str, data: dict) -> dict:
     timestamp = iso_now()
     pid = secrets.token_hex(12)
     try:
-        c.execute("INSERT INTO prospects(id,user_id,business_name,contact_name,email,phone,website,social_urls,industry,location,notes,source,status,tags,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                  (pid, user_id, record["business_name"], record["contact_name"], record["email"], record["phone"], record["website"], record["social_urls"], record["industry"], record["location"], record["notes"], record["source"], record["status"], record["tags"], timestamp, timestamp))
+        inserted = c.execute("INSERT INTO prospects(id,user_id,business_name,contact_name,email,phone,website,social_urls,industry,location,notes,source,status,tags,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(user_id,email) DO NOTHING",
+                             (pid, user_id, record["business_name"], record["contact_name"], record["email"], record["phone"], record["website"], record["social_urls"], record["industry"], record["location"], record["notes"], record["source"], record["status"], record["tags"], timestamp, timestamp))
     except sqlite3.IntegrityError:
         raise APIError(409, "A prospect with this normalized email already exists.", "duplicate_email") from None
+    if inserted.rowcount == 0:
+        raise APIError(409, "A prospect with this normalized email already exists.", "duplicate_email")
     audit(c, user_id, "prospect_created", f"{record['business_name']} added to prospects.", pid)
     return serialize_prospect(c.execute("SELECT * FROM prospects WHERE id=? AND user_id=?", (pid, user_id)).fetchone())
 
@@ -1093,6 +1209,7 @@ class KyroHandler(BaseHTTPRequestHandler):
         now = time.time()
         try:
             c.execute("BEGIN IMMEDIATE")
+            acquire_transaction_lock(c, "rate:" + key)
             row = c.execute("SELECT count,window_start FROM rate_limits WHERE key=?", (key,)).fetchone()
             if not row or now - float(row["window_start"]) > seconds:
                 c.execute("INSERT INTO rate_limits(key,count,window_start) VALUES(?,?,?) ON CONFLICT(key) DO UPDATE SET count=excluded.count,window_start=excluded.window_start", (key, 1, now))
@@ -1219,7 +1336,7 @@ class KyroHandler(BaseHTTPRequestHandler):
                 self._rate("demo:" + self.client_address[0], 30, 60)
                 self._demo_login()
                 return
-            if path == "/api/cron/run" and method == "POST":
+            if path == "/api/cron/run" and method in ("GET", "POST"):
                 self._cron()
                 return
             if path == "/api/webhooks/reply" and method == "POST":
@@ -1262,6 +1379,7 @@ class KyroHandler(BaseHTTPRequestHandler):
         c = db_connect()
         try:
             c.execute("BEGIN IMMEDIATE")
+            acquire_transaction_lock(c, "owner-setup")
             if c.execute("SELECT 1 FROM users WHERE is_demo=0 LIMIT 1").fetchone():
                 raise APIError(409, "An owner account already exists. Please sign in.", "setup_complete")
             uid = secrets.token_hex(16)

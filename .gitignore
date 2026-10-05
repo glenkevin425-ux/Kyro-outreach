@@ -1,4 +1,5 @@
 .env
+.vercel/
 data/
 *.sqlite3
 *.sqlite3-wal
