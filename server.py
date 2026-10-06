@@ -57,7 +57,7 @@ if not VERCEL_RUNTIME and not DATABASE_URL:
 MAX_DAILY_SENDS = 10
 RECENT_CONTACT_DAYS = 30
 SESSION_DAYS = 7
-DEMO_DEFAULT = "false" if VERCEL_RUNTIME else "true"
+DEMO_DEFAULT = "true"
 DEMO_ENABLED = os.getenv("KYRO_DEMO_ENABLED", DEMO_DEFAULT).lower() in {"1", "true", "yes", "on"}
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "").strip()
 RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "").strip()
