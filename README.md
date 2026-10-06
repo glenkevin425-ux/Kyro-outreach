@@ -1,144 +1,133 @@
-# Kyro — Client Acquisition OS
+# Kyro
 
-Kyro is a lightweight operating system for a small agency that wants a cleaner path from **prospect → conversation → client**.
+**A personal command center for turning intentions into completed work.**
 
-It is built for Kcreatives, but the product is workspace-based: keep a prospect pipeline, group prospects into campaigns, generate grounded first drafts, approve messages, schedule them, monitor the queue and measure outcomes.
+Kyro is no longer an outreach dashboard. This repository is now a deliberately simple, fast workspace for one person who is building things, studying, running a business, and experimenting with automation.
 
-This is **not** an autonomous spam bot. Kyro is designed around controlled, human-approved outreach.
+## The idea
 
-## Product
+Most productivity tools give you more places to put work.
 
-> **Kyro is the command center for client acquisition.**
+Kyro gives you one place to **decide, execute, and review**.
 
-- **Command Center** — daily capacity, funnel, queue and recent activity.
-- **Pipeline** — prospects, search, statuses, notes and CSV import.
-- **Campaigns** — controlled outreach sequences with daily caps.
-- **Message Lab** — grounded message generation and editing.
-- **Queue** — approved and scheduled work that is allowed to leave.
-- **Insights** — recorded sends, replies, interest and service performance.
-- **Workspace** — sender identity, timezone, sending window and provider state.
+> **Make the important work obvious. Make the repetitive work automatic.**
 
-The interface was rebuilt around these workflows while retaining the backend safeguards that make the system functional: workspace scoping, approval gates, suppression checks, scheduling, idempotent sends and the 10-send hard ceiling.
+The new Kyro has six surfaces:
 
-## Run locally
+- **Command** — the daily operating picture: workload, progress, active projects, automations and recent activity.
+- **Today** — a deliberately small execution queue.
+- **Projects** — outcomes, progress and the next move.
+- **Automations** — background systems and their health.
+- **Inbox** — frictionless capture for ideas before they disappear.
+- **Insights** — execution metrics instead of vanity metrics.
 
-Requirements: Python 3.11+.
+## Why this version is different
 
-~~~bash
-python3 server.py
-~~~
+The previous product was too dependent on backend bootstrapping and too narrowly defined around outreach.
 
-Open `http://localhost:8000`.
+This build starts with the product experience itself.
 
-The deployment-stage demo workspace is available automatically. Demo emails are simulated and never delivered.
+The application renders immediately and stores its demo state in browser localStorage. There is no login wall, API dependency, database requirement, cron requirement, or external service required to experience the product.
 
-Local development uses SQLite at `data/kyro.sqlite3`.
+That makes the demo reliable on static hosting such as Vercel.
 
-## Vercel
+## Run it
 
-The project uses `public/index.html` for the web application, `api/index.py` as the Vercel Python/ASGI entry point, and `server.py` for application/API logic.
+Open `public/index.html` directly, or serve the repository with any static web server.
 
-Set `DATABASE_URL`, `COOKIE_SECURE=true`, `APP_URL`, and `CRON_SECRET` in Vercel. For live email also configure `RESEND_API_KEY` and `RESEND_FROM_EMAIL`.
+For example:
 
-SQLite is deliberately rejected in Vercel because serverless function storage is not durable.
+```bash
+python3 -m http.server 8000 --directory public
+```
 
-The repository does not declare a sub-daily Vercel Cron schedule. The worker endpoint remains available at `/api/cron/run` for a trusted external scheduler using `Authorization: Bearer <CRON_SECRET>`.
+Then open `http://localhost:8000`.
 
-## Core workflow
+## Functional interactions
 
-### 1. Add prospects
-Add prospects individually from Pipeline or import CSV. Supported headers:
+The current build includes:
 
-~~~text
-business_name,contact_name,email,phone,website,industry,location,notes,source
-~~~
+- navigation between all six workspaces
+- task creation
+- task completion
+- persistent browser state
+- idea capture
+- resettable demo data
+- responsive desktop/tablet/mobile layouts
+- project and automation views
+- live activity presentation
+- no startup dependency on an API
 
-Kyro normalizes email addresses and prevents duplicate contacts inside a workspace.
+## Product architecture
 
-### 2. Create a campaign
-A campaign defines the service focus, daily limit, sending window, follow-up timing and selected prospects. The campaign limit can never exceed the global 10-send ceiling.
+The frontend is intentionally self-contained for the first release.
 
-### 3. Create a message
-Message Lab uses the prospect record plus an optional verified observation. The current generator is deterministic and does not invent company facts.
+Next layers can be added without redesigning the interface:
 
-### 4. Approve
-A generated message remains a draft until the operator explicitly approves it. Approval is separate from scheduling and sending.
+1. authenticated workspaces
+2. real database persistence
+3. AI task planning
+4. calendar integration
+5. Gmail/Outlook integration
+6. GitHub project activity
+7. scheduled automations
+8. natural-language commands
+9. multi-agent execution
+10. mobile/PWA support
 
-### 5. Schedule or send
-Scheduled messages enter Queue. Manual sends still pass every server-side check: prospect eligibility, suppression status, campaign membership, active campaign, recent-contact protection, sending window, campaign quota, workspace quota and idempotency protection.
+## Design direction
 
-### 6. Measure
-Insights only display events Kyro actually recorded. The application does not fabricate opens, clicks or delivery metrics.
+Kyro is intentionally:
 
-## Safety model
+- dark
+- quiet
+- premium
+- information-dense without being crowded
+- closer to Linear / Notion / Raycast than a generic SaaS template
+- keyboard-friendly
+- responsive
+- restrained with color
 
-Kyro has a hard maximum of **10 successful outreach sends per calendar day per workspace**.
+No gradients-for-the-sake-of-gradients. No fake enterprise dashboards. No giant marketing hero inside the product.
 
-Other safeguards include human approval, 30-day recent-contact protection, suppression lists, reply/interest stop conditions, campaign-level caps, sending windows, idempotent reservations, failure accounting, workspace-scoped queries, CSRF protection and secure session cookies.
+## Repository
 
-The demo workspace is isolated from real delivery.
-
-## API
-
-~~~text
-GET  /api/bootstrap
-GET  /api/dashboard
-GET  /api/prospects
-POST /api/prospects
-GET  /api/campaigns
-POST /api/campaigns
-POST /api/drafts/generate
-POST /api/drafts
-POST /api/drafts/:id/approve
-POST /api/drafts/:id/schedule
-POST /api/drafts/:id/send
-GET  /api/queue
-GET  /api/analytics
-GET  /api/settings
-PUT  /api/settings
-GET  /api/suppressions
-POST /api/suppressions
-GET  /healthz
-~~~
-
-## Structure
-
-~~~text
+```
 Kyro-outreach/
-├── api/index.py
-├── public/index.html
-├── server.py
-├── requirements.txt
-├── vercel.json
-├── Dockerfile
-├── .env.example
-└── README.md
-~~~
+└── public/
+    └── index.html
+```
 
-## Product direction
+The old server/API files can remain in the repository as historical scaffolding, but the new application does not depend on them.
 
-Future upgrades should extend the safety model rather than bypass it:
+## Roadmap
 
-1. business research connectors
-2. provider-native reply/webhook adapters
-3. richer campaign segmentation
-4. contact enrichment
-5. source-grounded AI personalization
-6. client/project conversion tracking
-7. recurring reporting
-8. external scheduler integration
-9. multi-user workspace roles
+### Phase 1 — Core cockpit
+Done.
 
-## Verification
+### Phase 2 — Kyro brain
+- natural language command bar
+- AI prioritization
+- automatic daily planning
+- context-aware project summaries
 
-~~~bash
-python3 -m unittest discover -s tests -v
-~~~
+### Phase 3 — Kyro hands
+- Gmail actions
+- calendar actions
+- GitHub actions
+- web research
+- scheduled jobs
 
-Health check: `GET /healthz`.
+### Phase 4 — Kyro memory
+- persistent workspace memory
+- project knowledge
+- personal operating preferences
+- searchable activity history
 
-Before live sending, verify PostgreSQL connectivity, a verified sending domain, sender identity, test recipient, worker secret, secure cookies, suppression behavior, daily quota and provider response handling.
+### Phase 5 — Kyro autonomy
+- approval-based agents
+- recurring workflows
+- failure recovery
+- execution logs
 
-**Kyro / Kcreatives**
-
-Design. Strategy. Growth.
+Kyro should become the layer between **what you want done** and **the tools that actually do it**.
