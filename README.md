@@ -1,104 +1,144 @@
-# Kyro Outreach
+# Kyro — Client Acquisition OS
 
-Kyro Outreach is an approval-first outreach workspace for Kcreatives. This repository contains a responsive browser UI, the existing local Python HTTP/SQLite server, a Vercel Python ASGI entrypoint, a SQLite/PostgreSQL storage adapter, password/session authentication, a Resend email adapter, and a secured scheduled-worker endpoint.
+Kyro is a lightweight operating system for a small agency that wants a cleaner path from **prospect → conversation → client**.
+
+It is built for Kcreatives, but the product is workspace-based: keep a prospect pipeline, group prospects into campaigns, generate grounded first drafts, approve messages, schedule them, monitor the queue and measure outcomes.
+
+This is **not** an autonomous spam bot. Kyro is designed around controlled, human-approved outreach.
+
+## Product
+
+> **Kyro is the command center for client acquisition.**
+
+- **Command Center** — daily capacity, funnel, queue and recent activity.
+- **Pipeline** — prospects, search, statuses, notes and CSV import.
+- **Campaigns** — controlled outreach sequences with daily caps.
+- **Message Lab** — grounded message generation and editing.
+- **Queue** — approved and scheduled work that is allowed to leave.
+- **Insights** — recorded sends, replies, interest and service performance.
+- **Workspace** — sender identity, timezone, sending window and provider state.
+
+The interface was rebuilt around these workflows while retaining the backend safeguards that make the system functional: workspace scoping, approval gates, suppression checks, scheduling, idempotent sends and the 10-send hard ceiling.
 
 ## Run locally
 
-Requirements: Python 3.11+ (Python 3.13 is supported). Local SQLite development uses only the Python standard library; install `requirements.txt` only when connecting to PostgreSQL.
+Requirements: Python 3.11+.
 
-```bash
-cp .env.example .env
+~~~bash
 python3 server.py
-```
+~~~
 
-Open `http://localhost:8000`. Select **Enter DEMO MODE** to explore the fictional workspace, or choose **Create owner workspace** to register a private account. The demo workspace is clearly labeled, uses reserved `.example` addresses, and cannot deliver email. Demo send buttons only simulate sends.
+Open `http://localhost:8000`.
 
-The app creates `data/kyro.sqlite3` on first local start. Keep the database and `.env` private. To start with a clean local database, stop the server and remove the database file.
+The deployment-stage demo workspace is available automatically. Demo emails are simulated and never delivered.
 
-### Docker
+Local development uses SQLite at `data/kyro.sqlite3`.
 
-```bash
-docker build -t kyro-outreach .
-docker run --rm -p 8000:8000 -v kyro-data:/app/data \
-  -e RESEND_API_KEY=... -e RESEND_FROM_EMAIL=... \
-  -e CRON_SECRET=... -e REPLY_WEBHOOK_SECRET=... \
-  kyro-outreach
-```
+## Vercel
 
-The Docker image defaults to demo mode off and secure cookies on; use HTTPS at the ingress and persist `/app/data`.
+The project uses `public/index.html` for the web application, `api/index.py` as the Vercel Python/ASGI entry point, and `server.py` for application/API logic.
 
-## Prepare / deploy on Vercel
+Set `DATABASE_URL`, `COOKIE_SECURE=true`, `APP_URL`, and `CRON_SECRET` in Vercel. For live email also configure `RESEND_API_KEY` and `RESEND_FROM_EMAIL`.
 
-The repository includes `api/index.py` (an ASGI app recognized by Vercel's Python Functions runtime) and `vercel.json` (API rewrites, static UI routing, function duration, and the secured Cron schedule). The original `python server.py` + SQLite workflow remains available locally.
+SQLite is deliberately rejected in Vercel because serverless function storage is not durable.
 
-1. Import the public GitHub repository `glenkevin425-ux/Kyro-outreach` into Vercel.
-2. Attach a managed PostgreSQL database (Neon or Supabase; use the provider's pooled connection string where available) and expose it as `DATABASE_URL`. `POSTGRES_URL` is also accepted. The Vercel runtime refuses to fall back to SQLite because function filesystems are not durable.
-3. Add production environment variables in Vercel **without committing secrets**:
-   - `DATABASE_URL` — managed PostgreSQL connection string.
-   - `KYRO_DEMO_ENABLED=false` — disable the clearly labeled demo workspace in production.
-   - `COOKIE_SECURE=true` and `APP_URL=https://<your-domain>`.
-   - `CRON_SECRET` — a long random secret; Vercel Cron sends it as `Authorization: Bearer <CRON_SECRET>`.
-   - `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and optionally `REPLY_WEBHOOK_SECRET` only if live provider functions are being configured.
-4. Deploy. On the first API request, Kyro creates its schema in the managed database. This does **not** import or migrate local SQLite records; a new Vercel database starts empty.
-5. Confirm the deployment, database connectivity, owner setup, email provider, secure cookies, and cron authorization before enabling a live campaign.
+The repository does not declare a sub-daily Vercel Cron schedule. The worker endpoint remains available at `/api/cron/run` for a trusted external scheduler using `Authorization: Bearer <CRON_SECRET>`.
 
-The configured worker runs every five minutes. Vercel currently restricts Hobby Cron to once per day; this schedule therefore requires a plan that supports sub-daily Cron (currently Pro or higher; see [Vercel Cron plan limits](https://vercel.com/docs/cron-jobs/usage-and-pricing)). The daily Hobby cadence is not an equivalent scheduler for intraday send windows. If deploying on Hobby, remove the `crons` block and use a trusted external scheduler at an appropriate cadence; keep `CRON_SECRET` authorization enabled.
+## Core workflow
 
-Vercel functions are stateless and the database stores durable transactional state. PostgreSQL advisory transaction locks serialize send-quota and login-rate-limit critical sections across concurrent function instances. The successful-send ceiling, idempotency, and failure accounting remain server-enforced.
+### 1. Add prospects
+Add prospects individually from Pipeline or import CSV. Supported headers:
 
-## Live email setup
+~~~text
+business_name,contact_name,email,phone,website,industry,location,notes,source
+~~~
 
-1. Create and verify a sending domain with Resend.
-2. Set `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in the server environment (never in browser code).
-3. Set a sender name/email and a test recipient in Settings.
-4. Send a clearly labelled test message and verify deliverability before enabling a campaign.
-5. Use `COOKIE_SECURE=true` behind HTTPS.
+Kyro normalizes email addresses and prevents duplicate contacts inside a workspace.
 
-If the provider is not configured, Kyro remains usable for prospect management, campaigns and draft approval; the send endpoint returns **Email provider not connected** and does not reserve/consume quota. Test sends are separate from outreach quota.
+### 2. Create a campaign
+A campaign defines the service focus, daily limit, sending window, follow-up timing and selected prospects. The campaign limit can never exceed the global 10-send ceiling.
 
-## Scheduler
+### 3. Create a message
+Message Lab uses the prospect record plus an optional verified observation. The current generator is deterministic and does not invent company facts.
 
-`/api/cron/run` is the secure, repeatable worker entry point. Vercel Cron invokes it with `GET`; `POST` is also supported for trusted schedulers. Configure `CRON_SECRET` and send:
+### 4. Approve
+A generated message remains a draft until the operator explicitly approves it. Approval is separate from scheduling and sending.
 
-```http
-Authorization: Bearer <CRON_SECRET>
-```
+### 5. Schedule or send
+Scheduled messages enter Queue. Manual sends still pass every server-side check: prospect eligibility, suppression status, campaign membership, active campaign, recent-contact protection, sending window, campaign quota, workspace quota and idempotency protection.
 
-Vercel Cron supplies that Bearer header when the project environment variable is named `CRON_SECRET`. Requests without a configured matching secret are rejected. The worker selects due, approved jobs from active campaigns and repeats the same server-side eligibility checks as a manual send. It is safe to invoke more than once: database reservations, stable idempotency keys, and the unique successful-send constraint prevent duplicate outreach. The app does not run a hidden, unbounded background loop.
+### 6. Measure
+Insights only display events Kyro actually recorded. The application does not fabricate opens, clicks or delivery metrics.
 
-## Reply events
+## Safety model
 
-Set `REPLY_WEBHOOK_SECRET` to enable the provider-neutral `POST /api/webhooks/reply` endpoint. A trusted provider adapter should verify the provider's native signature first, then call Kyro using this canonical payload and bearer secret:
+Kyro has a hard maximum of **10 successful outreach sends per calendar day per workspace**.
 
-```json
-{"event_id":"provider-event-id","workspace_id":"workspace-id","prospect_email":"contact@example.com","status":"Replied","note":"Optional internal summary"}
-```
+Other safeguards include human approval, 30-day recent-contact protection, suppression lists, reply/interest stop conditions, campaign-level caps, sending windows, idempotent reservations, failure accounting, workspace-scoped queries, CSRF protection and secure session cookies.
 
-Supported statuses are `Replied`, `Interested`, `Not Interested`, and `Do Not Contact`. Events are idempotent; a match updates the prospect, writes an audit event, cancels pending follow-ups and queued sends, and adds a suppression for `Do Not Contact`. The callback intentionally does not guess how arbitrary provider payloads should be verified or mapped.
+The demo workspace is isolated from real delivery.
 
-## Safety and data behavior
+## API
 
-- **Global ceiling:** the server hard-caps successful outreach at 10 per calendar day in the workspace timezone. Initial messages, follow-ups, manual sends and scheduled jobs share the same atomic quota reservation.
-- **Failures:** provider failures release the reservation and do not increment the successful-send counter.
-- **Approval:** drafts start as `Draft`; explicit approval is required before scheduling or sending. AI-generated drafts are not automatically sent.
-- **Suppression / replies:** normalized addresses are checked against a workspace suppression list, and reply/interested/not-interested states stop pending follow-ups.
-- **Research:** the built-in draft generator is a grounded, deterministic template. It interpolates only the prospect record and the optional user-entered verified observation. It does not scrape websites or invent company facts. No AI provider is currently wired; `AI_API_KEY` is reserved and has no effect.
-- **Analytics:** figures are derived from Kyro's recorded database events. Provider delivery/open/click metrics are not fabricated.
-- **Authentication:** passwords use PBKDF2-SHA256; sessions are random, stored as hashes, HttpOnly and SameSite=Lax. Mutating requests use a session-bound CSRF token. All record queries include the authenticated user/workspace scope.
+~~~text
+GET  /api/bootstrap
+GET  /api/dashboard
+GET  /api/prospects
+POST /api/prospects
+GET  /api/campaigns
+POST /api/campaigns
+POST /api/drafts/generate
+POST /api/drafts
+POST /api/drafts/:id/approve
+POST /api/drafts/:id/schedule
+POST /api/drafts/:id/send
+GET  /api/queue
+GET  /api/analytics
+GET  /api/settings
+PUT  /api/settings
+GET  /api/suppressions
+POST /api/suppressions
+GET  /healthz
+~~~
 
-## Database notes
+## Structure
 
-- Local development uses SQLite in `data/kyro.sqlite3`; Docker deployments need a persistent volume.
-- Vercel uses PostgreSQL via `DATABASE_URL`/`POSTGRES_URL`. SQLite is deliberately rejected on Vercel. The database schema is initialized lazily on the first API request.
-- Local-to-managed database migration is not automatic. Preserve existing local data separately and move it only through a deliberate, verified migration process.
-- Keep database/provider secrets in environment configuration, back up the managed database, use a verified sending domain, and monitor scheduled-worker and reply-webhook delivery. No provider secret is returned by an API route.
+~~~text
+Kyro-outreach/
+├── api/index.py
+├── public/index.html
+├── server.py
+├── requirements.txt
+├── vercel.json
+├── Dockerfile
+├── .env.example
+└── README.md
+~~~
+
+## Product direction
+
+Future upgrades should extend the safety model rather than bypass it:
+
+1. business research connectors
+2. provider-native reply/webhook adapters
+3. richer campaign segmentation
+4. contact enrichment
+5. source-grounded AI personalization
+6. client/project conversion tracking
+7. recurring reporting
+8. external scheduler integration
+9. multi-user workspace roles
 
 ## Verification
 
-Run the backend checks with:
-
-```bash
+~~~bash
 python3 -m unittest discover -s tests -v
-```
+~~~
 
-The safeguard suite exercises concurrent quota enforcement and failed-send accounting against an isolated temporary database with a fake provider; it never sends real email.
+Health check: `GET /healthz`.
+
+Before live sending, verify PostgreSQL connectivity, a verified sending domain, sender identity, test recipient, worker secret, secure cookies, suppression behavior, daily quota and provider response handling.
+
+**Kyro / Kcreatives**
+
+Design. Strategy. Growth.
