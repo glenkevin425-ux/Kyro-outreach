@@ -131,3 +131,8 @@ Done.
 - execution logs
 
 Kyro should become the layer between **what you want done** and **the tools that actually do it**.
+
+
+## Stable redeployment
+
+This commit redeploys the verified stable Kyro application build.
