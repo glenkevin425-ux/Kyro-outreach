@@ -50,8 +50,8 @@ DATA_DIR = ROOT / "data"
 VERCEL_RUNTIME = os.getenv("VERCEL", "").lower() in {"1", "true"}
 DATABASE_URL = (os.getenv("DATABASE_URL") or os.getenv("POSTGRES_URL") or
                 os.getenv("POSTGRES_PRISMA_URL") or "").strip()
-DB_PATH = Path(os.getenv("DATABASE_PATH", str(DATA_DIR / "kyro.sqlite3")))
-# Vercel's deployment filesystem is read-only; SQLite remains the local-development default.
+DB_PATH = Path(os.getenv("DATABASE_PATH", str((Path("/tmp") if VERCEL_RUNTIME else DATA_DIR) / "kyro.sqlite3")))
+# PostgreSQL is preferred for persistence; /tmp SQLite keeps the deployment-stage demo functional without it.
 if not VERCEL_RUNTIME and not DATABASE_URL:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 MAX_DAILY_SENDS = 10
