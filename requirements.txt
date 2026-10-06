@@ -1,2 +1,2 @@
-# psycopg is used only when DATABASE_URL/POSTGRES_URL is configured; local SQLite stays built-in.
+# Kyro ClientOS uses psycopg only when DATABASE_URL/POSTGRES_URL is configured; local SQLite is built into Python.
 psycopg[binary]>=3.2,<4
