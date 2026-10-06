@@ -499,7 +499,7 @@ def ensure_demo_user() -> str:
         campaign_id = secrets.token_hex(12)
         now = utc_now()
         c.execute("INSERT INTO campaigns(id,user_id,name,service_focus,status,daily_limit,sending_window_start,sending_window_end,follow_up_delay_days,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
-                  (campaign_id, uid, "October introductions", "Meta Ads", "Active", 10, "09:00", "17:00", 4, iso(now - timedelta(days=10)), iso_now()))
+                  (campaign_id, uid, "Kcreatives Growth Sprint", "Branding", "Active", 10, "09:00", "17:00", 4, iso(now - timedelta(days=10)), iso_now()))
         ids: list[str] = []
         for ix, (business, contact, email, industry, loc, service, tags) in enumerate(names):
             pid = secrets.token_hex(12)
@@ -551,14 +551,14 @@ def ensure_demo_user() -> str:
         demo_schedule = demo_candidate.astimezone(timezone.utc)
         demo_draft_id = secrets.token_hex(12)
         c.execute("INSERT INTO email_drafts(id,user_id,prospect_id,campaign_id,subject,body,personalization_notes,service_focus,status,kind,scheduled_for,approved_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                  (demo_draft_id, uid, ids[7], campaign_id, "A quick idea for Horizon Events",
+                  (demo_draft_id, uid, ids[7], campaign_id, "A quick idea for Mara Events",
                    "Hi Joel,\n\nThis is a fictional demo email scheduled for review. No email will be delivered in DEMO MODE.\n\nBest,\nGlen\nKcreatives",
                    "Fictional demo content — review before use.", "TikTok Ads", "Scheduled", "initial", iso(demo_schedule), iso(now), iso(now), iso(now)))
         activities = [
           ("email_sent", "7 demo outreach emails recorded today", ids[0]),
-          ("reply_recorded", "Reply recorded from Apex Auto Care", ids[1]),
-          ("reply_recorded", "Interested reply recorded from Greenline Pharmacy", ids[2]),
-          ("reply_recorded", "Reply recorded from Lakeview Furnishings", ids[5]),
+          ("reply_recorded", "Reply recorded from Northline Motors", ids[1]),
+          ("reply_recorded", "Interested reply recorded from Luma Wellness", ids[2]),
+          ("reply_recorded", "Reply recorded from Lakehouse Living", ids[5]),
           ("draft_approved", "Branding draft approved", ids[5]),
           ("prospect_added", "Prospect added to the pipeline", ids[7]),
           ("follow_up_scheduled", "4 demo follow-ups are due for review", ids[0]),
