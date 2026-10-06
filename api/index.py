@@ -1,4 +1,4 @@
-"""Vercel Python ASGI entrypoint for Kyro Outreach."""
+"""Vercel Python ASGI entrypoint for Kyro ClientOS."""
 from __future__ import annotations
 
 import asyncio
@@ -59,7 +59,7 @@ class _Headers:
 
 
 class _VercelRequest(kyro.KyroHandler):
-    """Minimal BaseHTTPRequestHandler-shaped adapter for the existing route logic."""
+    """Minimal BaseHTTPRequestHandler-shaped adapter for the Kyro ClientOS route logic."""
 
     def __init__(self, method: str, path: str, headers: _Headers, client: tuple[str, int]):
         self.command = method
