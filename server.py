@@ -1294,20 +1294,32 @@ class KyroHandler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def _bootstrap(self) -> None:
-        current = self._current()
         c = db_connect()
         try:
+            # Deployment-stage mode: bootstrap creates the demo session server-side.
+            # This removes the fragile client-side auth round-trip while keeping the
+            # real authentication routes available for the later production stage.
+            current = self._current()
+            if not current and DEMO_ENABLED:
+                uid = ensure_demo_user()
+                raw, csrf = create_session(c, uid)
+                current = (c.execute("SELECT * FROM sessions WHERE token_hash=?", (hashlib.sha256(raw.encode()).hexdigest(),)).fetchone(),
+                           c.execute("SELECT * FROM users WHERE id=?", (uid,)).fetchone())
+                set_cookie_headers = self._set_session_cookies(raw, csrf)
+            else:
+                set_cookie_headers = []
+
             real = c.execute("SELECT COUNT(*) AS n FROM users WHERE is_demo=0").fetchone()["n"]
             payload: dict[str, Any] = {"authenticated": False, "setup_required": real == 0,
                                        "demo_enabled": DEMO_ENABLED, "app_name": "Kyro Outreach"}
             if current:
                 session, user = current
                 p = c.execute("SELECT * FROM profiles WHERE user_id=?", (user["id"],)).fetchone()
-                s = c.execute("SELECT * FROM agency_settings WHERE user_id=?", (user["id"],)).fetchone()
+                settings = c.execute("SELECT * FROM agency_settings WHERE user_id=?", (user["id"],)).fetchone()
                 payload.update({"authenticated": True, "csrf": session["csrf_token"],
                                 "user": {"id": user["id"], "email": user["email"], "display_name": user["display_name"], "demo_mode": bool(user["is_demo"])},
-                                "sender": dict(p) if p else {}, "agency": {**dict(s), "services": safe_json(s["services"], SERVICES)} if s else {}})
-            self._send_json(200, payload)
+                                "sender": dict(p) if p else {}, "agency": {**dict(settings), "services": safe_json(settings["services"], SERVICES)} if settings else {}})
+            self._send_json(200, payload, set_cookie_headers)
         finally:
             c.close()
 
