@@ -471,30 +471,30 @@ def create_profile_and_settings(c: sqlite3.Connection, user_id: str, display_nam
               (secrets.token_hex(12), user_id, display_name, sender_name, sender_email, sender_email, "Africa/Nairobi", timestamp))
     c.execute("INSERT INTO agency_settings(id,user_id,agency_name,tagline,services,description,sending_window_start,sending_window_end,daily_limit,follow_up_delay_days,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)",
               (secrets.token_hex(12), user_id, "Kcreatives", "Design. Strategy. Growth.", json.dumps(SERVICES),
-               "We help businesses grow through thoughtful design, branding and paid social.", "09:00", "17:00", MAX_DAILY_SENDS, 4, timestamp))
+               "A compact client-acquisition studio for finding the right businesses, starting relevant conversations and turning interest into work.", "09:00", "17:00", MAX_DAILY_SENDS, 4, timestamp))
 
 
 def ensure_demo_user() -> str:
-    uid = "kyro-demo-workspace"
+    uid = "kyro-clientos-demo-v2"
     with db_connect() as c:
         user = c.execute("SELECT id FROM users WHERE id=? AND is_demo=1", (uid,)).fetchone()
         if not user:
             c.execute("INSERT INTO users(id,workspace_id,email,password_hash,display_name,is_demo,created_at) VALUES(?,?,?,?,?,?,?)",
-                      (uid, uid, "demo@kcreatives.example", password_hash(secrets.token_urlsafe(24)), "Glen", 1, iso_now()))
-            create_profile_and_settings(c, uid, "Glen", "Glen", "glen@kcreatives.example")
+                      (uid, uid, "demo@kyro.example", password_hash(secrets.token_urlsafe(24)), "Kyro Demo", 1, iso_now()))
+            create_profile_and_settings(c, uid, "Kyro Demo", "Glen", "glen@kcreatives.example")
         existing = c.execute("SELECT COUNT(*) AS n FROM prospects WHERE user_id=?", (uid,)).fetchone()["n"]
         if existing:
             return uid
         # Fictional, reserved .example addresses. Every row and metric in this workspace is labeled DEMO.
         names = [
-          ("Nova Café", "Amina", "hello@novacafe.example", "Food & Beverage", "Kakamega", "Branding", ["cafe", "local"]),
-          ("Apex Auto Care", "Brian", "service@apexautocare.example", "Automotive", "Kisumu", "Graphic Design", ["automotive"]),
-          ("Greenline Pharmacy", "Miriam", "care@greenlinepharmacy.example", "Healthcare", "Kakamega", "Meta Ads", ["retail"]),
-          ("Urban Thread", "Nia", "hello@urbanthread.example", "Fashion", "Nairobi", "TikTok Ads", ["fashion"]),
-          ("Westside Fitness", "David", "team@westsidefitness.example", "Fitness", "Eldoret", "Meta Ads", ["fitness"]),
-          ("Lakeview Furnishings", "Sam", "info@lakeviewfurnishings.example", "Home & Living", "Kisumu", "Branding", ["retail"]),
-          ("Pixel House", "Leah", "studio@pixelhouse.example", "Creative Services", "Nairobi", "Graphic Design", ["creative"]),
-          ("Horizon Events", "Joel", "hello@horizonevents.example", "Events", "Kakamega", "TikTok Ads", ["events"]),
+          ("Maji House", "Amina", "hello@majihouse.example", "Hospitality", "Kakamega", "Branding", ["hospitality", "local"]),
+          ("Northline Motors", "Brian", "service@northline.example", "Automotive", "Kisumu", "Graphic Design", ["automotive"]),
+          ("Luma Wellness", "Miriam", "care@lumawellness.example", "Wellness", "Kakamega", "Meta Ads", ["wellness"]),
+          ("Nairobi Form", "Nia", "hello@nairobiform.example", "Fashion", "Nairobi", "TikTok Ads", ["fashion"]),
+          ("Pulse Studio", "David", "team@pulsestudio.example", "Fitness", "Eldoret", "Meta Ads", ["fitness"]),
+          ("Lakehouse Living", "Sam", "info@lakehouseliving.example", "Home & Living", "Kisumu", "Branding", ["retail"]),
+          ("Northstar Creative", "Leah", "studio@northstar.example", "Creative Services", "Nairobi", "Graphic Design", ["creative"]),
+          ("Mara Events", "Joel", "hello@maraevents.example", "Events", "Kakamega", "TikTok Ads", ["events"]),
         ]
         campaign_id = secrets.token_hex(12)
         now = utc_now()
@@ -507,7 +507,7 @@ def ensure_demo_user() -> str:
             status = "Replied" if ix in (1, 5) else ("Interested" if ix == 2 else ("New" if ix == 7 else "Contacted"))
             created = iso(now - timedelta(days=18 - ix))
             c.execute("INSERT INTO prospects(id,user_id,business_name,contact_name,email,industry,location,notes,source,status,tags,created_at,updated_at,last_contacted_at,responded_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                      (pid, uid, business, contact, email, industry, loc, "Demo record — replace with verified research before outreach.", "Demo workspace", status,
+                      (pid, uid, business, contact, email, industry, loc, "Demo record — replace with verified research before using it in a real client workflow.", "Demo workspace", status,
                        json.dumps(tags), created, created,
                        iso(now - timedelta(days=5)) if ix < 7 else None,
                        iso(now - timedelta(days=3)) if status in ("Replied", "Interested") else None))
@@ -1138,7 +1138,7 @@ def stop_pending_outreach(c: sqlite3.Connection, user_id: str, prospect_id: str)
 
 
 class KyroHandler(BaseHTTPRequestHandler):
-    server_version = "KyroOutreach/1.0"
+    server_version = "KyroClientOS/2.0"
     sys_version = ""
 
     def log_message(self, fmt: str, *args: Any) -> None:
@@ -1311,7 +1311,7 @@ class KyroHandler(BaseHTTPRequestHandler):
 
             real = c.execute("SELECT COUNT(*) AS n FROM users WHERE is_demo=0").fetchone()["n"]
             payload: dict[str, Any] = {"authenticated": False, "setup_required": real == 0,
-                                       "demo_enabled": DEMO_ENABLED, "app_name": "Kyro Outreach"}
+                                       "demo_enabled": DEMO_ENABLED, "app_name": "Kyro Client Acquisition OS"}
             if current:
                 session, user = current
                 p = c.execute("SELECT * FROM profiles WHERE user_id=?", (user["id"],)).fetchone()
