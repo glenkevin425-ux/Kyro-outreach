@@ -1,15 +1,11 @@
-FROM python:3.13-slim
+FROM python:3.12-slim
 WORKDIR /app
-COPY requirements.txt ./requirements.txt
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-COPY server.py ./server.py
-COPY public ./public
-RUN mkdir -p /app/data && useradd --system --uid 10001 kyro && chown -R kyro:kyro /app
-USER kyro
-ENV HOST=0.0.0.0 \
-    PORT=8000 \
-    DATABASE_PATH=/app/data/kyro.sqlite3 \
-    KYRO_DEMO_ENABLED=false \
-    COOKIE_SECURE=true
+COPY . .
+ENV PYTHONUNBUFFERED=1
+ENV PORT=8000
+ENV DATABASE_PATH=/app/data/kyro.sqlite3
+RUN mkdir -p /app/data
 EXPOSE 8000
-CMD ["python", "server.py"]
+CMD ["python","server.py"]
