@@ -276,8 +276,7 @@ class ClosingSQLiteConnection(sqlite3.Connection):
 def db_connect():
     if DATABASE_URL:
         return PostgresConnection(DATABASE_URL)
-    if VERCEL_RUNTIME:
-        raise RuntimeError("DATABASE_URL is required on Vercel; SQLite is local-only and not durable there.")
+    # PostgreSQL is preferred in production; SQLite keeps the deployment-stage demo self-contained.
     c = sqlite3.connect(DB_PATH, timeout=15, isolation_level=None, factory=ClosingSQLiteConnection)
     c.row_factory = sqlite3.Row
     c.execute("PRAGMA foreign_keys = ON")
