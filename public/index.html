@@ -34,10 +34,104 @@ main{margin-left:248px;min-height:100vh}.top{height:66px;border-bottom:1px solid
 </section></main></div>
 <div class="modal" id="modal"><div class="modalbox"><h2>New task</h2><p>Give Kyro something concrete to move forward.</p><div class="field"><label>Task</label><input id="task" placeholder="What needs to happen?"></div><div class="modalactions"><button class="btn" id="cancel">Cancel</button><button class="btn primary" id="create">Create task</button></div></div></div><div class="toast" id="toast"></div>
 <script>
-const key='kyro-v4';let d=JSON.parse(localStorage.getItem(key)||'null')||{done:4,ideas:["Build Kyro into a real AI operating system","Make Kcreatives acquisition more systematic","Connect GitHub and Replit to Kyro"],tasks:[["Design Kyro command layer","Today"],["Review Kcreatives pipeline","Today"],["Write next product spec","Today"],["Study civil engineering","Today"],["Research AI agents","Later"],["Plan tomorrow","Later"]]};const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-function save(){localStorage.setItem(key,JSON.stringify(d))}function toast(t){let x=$('#toast');x.textContent=t;x.style.display='block';clearTimeout(window.toastT);window.toastT=setTimeout(()=>x.style.display='none',2200)}
-function render(){ $('#done').textContent=d.done;let gs={Today:[],Later:[]};d.tasks.forEach((x,i)=>gs[x[1]].push([x[0],i]));$('#board').innerHTML=Object.entries(gs).map(([g,items])=>'<div class="col"><div class="colhead"><b>'+g+'</b><span>'+items.length+'</span></div>'+items.map(([t,i])=>'<div class="task"><b>'+t+'</b><p>'+ (g==='Today'?'Priority action · keep moving':'Backlog · review when useful')+'</p><div class="taskfoot"><span class="pill">'+(g==='Today'?'Focus':'Later')+'</span><button class="btn" style="padding:4px 7px;font-size:9px" onclick="complete('+i+')">Done</button></div></div>').join('')+'</div>').join('');$('#ideas').innerHTML=d.ideas.map((x,i)=>'<div class="idea"><b>'+x+'</b><p>Remembered by Kyro · '+(i+1)+' item'+(i?'s':'')+' ago</p></div>').join('');$('#count').textContent=d.ideas.length+' items'}
+const key='kyro-v5';
+let d=JSON.parse(localStorage.getItem(key)||'null')||{
+  done:4,
+  ideas:["Build Kyro into a real AI operating system","Make Kcreatives acquisition more systematic","Connect GitHub and Replit to Kyro"],
+  tasks:[["Design Kyro command layer","Today"],["Review Kcreatives pipeline","Today"],["Write next product spec","Today"],["Study civil engineering","Today"],["Research AI agents","Later"],["Plan tomorrow","Later"]],
+  plans:[], connections:{GitHub:true,Gmail:false,Calendar:false,Replit:false}
+};
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+function save(){localStorage.setItem(key,JSON.stringify(d))}
+function toast(t){let x=$('#toast');x.textContent=t;x.style.display='block';clearTimeout(window.toastT);window.toastT=setTimeout(()=>x.style.display='none',2400)}
+function render(){
+  $('#done').textContent=d.done;
+  let gs={Today:[],Later:[]};
+  d.tasks.forEach((x,i)=>gs[x[1]].push([x[0],i]));
+  $('#board').innerHTML=Object.entries(gs).map(([g,items])=>'<div class="col"><div class="colhead"><b>'+g+'</b><span>'+items.length+'</span></div>'+items.map(([t,i])=>'<div class="task"><b>'+esc(t)+'</b><p>'+(g==='Today'?'Priority action · keep moving':'Backlog · review when useful')+'</p><div class="taskfoot"><span class="pill">'+(g==='Today'?'Focus':'Later')+'</span><button class="btn" style="padding:4px 7px;font-size:9px" data-complete="'+i+'">Done</button></div></div>').join('')+'</div>').join('');
+  $('#ideas').innerHTML=d.ideas.map((x,i)=>'<div class="idea"><b>'+esc(x)+'</b><p>Remembered by Kyro · '+(i+1)+' item'+(i?'s':'')+' ago</p></div>').join('');
+  $('#count').textContent=d.ideas.length+' items';
+  $$('#connections .card').forEach(card=>{
+    const name=card.querySelector('b')?.textContent?.trim();
+    if(!name||name==='GitHub'&&d.connections.GitHub===undefined)return;
+    const status=d.connections[name];
+    const pill=card.querySelector('.pill');
+    if(pill&&typeof status==='boolean'){pill.textContent=status?'Connected':'Connect';pill.className='pill '+(status?'green':'')}
+  });
+}
+function esc(v){return String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function complete(i){d.tasks.splice(i,1);d.done++;save();toast('Task completed');render()}
 function go(v){$$('.view').forEach(x=>x.classList.toggle('active',x.id===v));$$('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.v===v));$('#crumb').textContent={home:'Command',today:'Today',projects:'Projects',automations:'Automations',inbox:'Memory',insights:'Insights',connections:'Connections'}[v];render()}
-$$('.nav button').forEach(x=>x.onclick=()=>go(x.dataset.v));function open(){ $('#modal').classList.add('open');$('#task').focus()}$('#new').onclick=open;$('#add').onclick=open;$('#cancel').onclick=()=>$('#modal').classList.remove('open');$('#create').onclick=()=>{let v=$('#task').value.trim();if(!v)return;d.tasks.unshift([v,'Today']);save();$('#task').value='';$('#modal').classList.remove('open');toast('Added to today');go('today')};$('#save').onclick=()=>{let v=$('#idea').value.trim();if(!v)return;d.ideas.unshift(v);save();$('#idea').value='';toast('Saved to memory');render()};$('#reset').onclick=()=>{localStorage.removeItem(key);location.reload()};$('#command').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.value.trim()){let q=e.target.value.trim();e.target.value='';toast('Kyro received: '+q);setTimeout(()=>toast('Plan created · ready for your approval'),700)}});window.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#command')?.focus()}});render();
+$$('.nav button').forEach(x=>x.addEventListener('click',()=>go(x.dataset.v)));
+function openTask(){ $('#modal').classList.add('open');$('#task').focus() }
+$('#new').onclick=openTask;$('#add').onclick=openTask;$('#cancel').onclick=()=>$('#modal').classList.remove('open');
+$('#create').onclick=()=>{
+  const v=$('#task').value.trim();
+  if(!v){toast('Enter a task first');return}
+  d.tasks.unshift([v,'Today']);save();$('#task').value='';$('#modal').classList.remove('open');toast('Added to today');go('today')
+};
+$('#save').onclick=()=>{
+  const v=$('#idea').value.trim();
+  if(!v){toast('Write something to remember');return}
+  d.ideas.unshift(v);save();$('#idea').value='';toast('Saved to memory');render()
+};
+$('#reset').onclick=()=>{localStorage.removeItem(key);location.reload()};
+document.addEventListener('click',e=>{
+  const done=e.target.closest('[data-complete]');
+  if(done){complete(Number(done.dataset.complete));return}
+  const card=e.target.closest('#connections .card');
+  if(card){
+    const name=card.querySelector('b')?.textContent?.trim();
+    if(name&&name in d.connections){
+      d.connections[name]=!d.connections[name];save();render();toast(name+(d.connections[name]?' connected':' disconnected'));
+    }
+  }
+});
+function planFor(q){
+  const s=q.toLowerCase();
+  if(s.includes('kcreatives')||s.includes('client')||s.includes('outreach'))return {
+    title:'Kcreatives client acquisition plan',
+    summary:'A focused workflow to identify prospects, prepare outreach, and track follow-ups.',
+    steps:['Define the ideal client profile','Research 10 relevant businesses','Prepare personalized outreach','Create a follow-up queue','Review results and improve the message']
+  };
+  if(s.includes('day')||s.includes('tomorrow'))return {
+    title:'Plan my day',
+    summary:'Turn your priorities into a small, executable schedule.',
+    steps:['Review active projects','Choose the 3 highest-impact tasks','Block focused work','Handle small admin tasks','Review progress before finishing']
+  };
+  if(s.includes('github')||s.includes('project'))return {
+    title:'Review my projects',
+    summary:'Inspect active work and identify the next concrete actions.',
+    steps:['Review active projects','Identify blockers','Choose the next action for each','Prioritize what ships first','Create the execution queue']
+  };
+  return {
+    title:q.charAt(0).toUpperCase()+q.slice(1),
+    summary:'Kyro turned your request into an executable plan. Review it before starting.',
+    steps:['Clarify the desired outcome','Break the outcome into actions','Choose the right tools','Execute the safe steps','Review the result']
+  };
+}
+function showPlan(q){
+  const p=planFor(q);
+  let old=$('#planModal');if(old)old.remove();
+  const box=document.createElement('div');box.className='modal open';box.id='planModal';
+  box.innerHTML='<div class="modalbox"><div class="eyebrow">Kyro plan</div><h2>'+esc(p.title)+'</h2><p>'+esc(p.summary)+'</p><div class="steps" style="margin:0 0 18px">'+p.steps.map((x,i)=>'<div class="step '+(i===0?'active':'')+'"><i>'+(i+1)+'</i>'+esc(x)+'</div>').join('')+'</div><div class="modalactions"><button class="btn" id="planCancel">Cancel</button><button class="btn primary" id="planStart">Start plan</button></div></div>';
+  document.body.appendChild(box);
+  $('#planCancel').onclick=()=>box.remove();
+  $('#planStart').onclick=()=>{
+    d.plans.unshift({title:p.title,status:'running',steps:p.steps,created:Date.now()});
+    p.steps.slice(0,2).forEach(x=>d.tasks.unshift([x,'Today']));
+    save();box.remove();toast('Plan started · 2 actions added');go('today')
+  };
+}
+$('#command').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    const q=e.target.value.trim();if(!q){toast('Tell Kyro what you want done');return}
+    e.target.value='';showPlan(q)
+  }
+});
+window.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#command')?.focus()}
+  if(e.key==='Escape'){$('#modal')?.classList.remove('open');$('#planModal')?.remove()}
+});
+render();
 </script></body></html>
