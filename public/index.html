@@ -71,7 +71,21 @@ function importCsv(){openModal('Import prospects','<div class="field"><label>CSV
 function parseCsv(t){const rows=[];let row=[],cell='',q=false;for(let i=0;i<t.length;i++){const c=t[i];if(c==='"'&&t[i+1]==='"'){cell+='"';i++;continue}if(c==='"'){q=!q;continue}if(c===','&&!q){row.push(cell);cell='';continue}if((c==='\n'||c==='\r')&&!q){if(c==='\r'&&t[i+1]==='\n')i++;row.push(cell);if(row.some(x=>x.trim()))rows.push(row);row=[];cell='';continue}cell+=c}if(cell||row.length){row.push(cell);rows.push(row)}if(!rows.length)return[];const h=rows.shift().map(x=>x.trim().toLowerCase());return rows.map(r=>Object.fromEntries(h.map((k,i)=>[k,(r[i]||'').trim()])))}
 async function doImport(){try{const f=$('#csv').files[0];if(!f)throw new Error('Choose a CSV file');const rows=parseCsv(await f.text());const r=await api('/api/import/commit',{method:'POST',body:{rows}});closeModal();toast('Imported '+r.created+' prospects');await loadPage()}catch(e){toast(e.message,true)}}
 async function saveSettings(){try{await api('/api/settings',{method:'PUT',body:{sender_name:$('#wname').value,sender_email:$('#wemail').value,reply_to:$('#wreply').value,timezone:$('#wtz').value,agency_name:$('#wagency').value,tagline:$('#wtag').value,description:$('#wdesc').value,sending_window_start:$('#ws').value,sending_window_end:$('#we').value}});toast('Workspace saved');await loadPage()}catch(e){toast(e.message,true)}}
-async function boot(){try{S.boot=await api('/api/bootstrap');if(!S.boot.authenticated)throw new Error('Workspace session could not be established');await loadDashboard();render()}catch(e){document.body.innerHTML='<div class="empty" style="padding-top:20vh"><b>Kyro could not connect</b><p>'+esc(e.message)+'</p><button class="btn primary" onclick="location.reload()">Retry</button></div>'}}
+async function boot(){
+  // Render the application shell immediately. API data hydrates into it afterward.
+  // A transient bootstrap failure must never trap the user on a permanent loading screen.
+  render();
+  try{
+    S.boot=await api('/api/bootstrap');
+    if(!S.boot.authenticated){throw new Error('Workspace session could not be established');}
+    await loadDashboard();
+    render();
+  }catch(e){
+    S.boot=S.boot||{authenticated:true,app_name:'Kyro Client Acquisition OS'};
+    S.error=e.message||'The workspace API is unavailable.';
+    render();
+  }
+}
 boot();
 </script>
 </body>
