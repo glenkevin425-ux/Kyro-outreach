@@ -1,0 +1,286 @@
+# KYRO — SECOND-OPINION REVIEW PACKET
+
+## Project
+Kyro is a personal command center for one user.
+
+Kyro V1 is intentionally NOT an AI agent. It must work without Anthropic/OpenAI API keys, MCP, an LLM, or paid external services.
+
+## Goal
+One place to see, organize, and manage everything the user is working on.
+
+Sections:
+- Dashboard
+- Tasks
+- Projects
+- Finance
+- Ideas
+- Goals
+- Activity
+
+## Architecture
+Client-side web app using browser localStorage. No backend dependency in V1.
+
+## Product requirements
+- Free
+- Personal
+- Reliable
+- Responsive
+- Interactive
+- Premium visual quality
+- Simple to maintain
+- No required AI/API keys
+
+Design direction: Apple / Linear / Notion / Raycast / Stripe / Vercel quality; clean light UI; electric-blue accents; strong hierarchy; realistic demo data.
+
+## Finance invariant
+October income is exactly **KSh 31,450**.
+
+October allocation must total exactly **KSh 31,450**:
+- Needs: KSh 14,467
+- Savings: KSh 8,177
+- Business: KSh 5,032
+- Other: KSh 3,774
+
+Do not show spending above the available October income unless a separate expense/balance model is explicitly introduced.
+
+## Current demo data
+Tasks:
+- Review structural analysis — Today — High
+- Work on Kcreatives homepage — Today — High
+- Study for 2 hours — Today — Medium
+- Review Kyro project roadmap — Today — Medium
+- Send Golf Hotel proposal — Tomorrow — High
+
+Projects:
+- Kcreatives — 82%
+- Kyro — 48%
+- Fixly — 64%
+- MMUST HostelHub — 41%
+
+Ideas:
+- Kcreatives client portal
+- Student command center
+
+Goals:
+- Build Kcreatives into a consistent side business — 42%
+- Maintain a strong university performance — 58%
+- Build a 3-month emergency buffer — 31%
+- Ship Kyro V1 — 72%
+
+## Known bug history
+The UI previously appeared completely dead: sidebar navigation and Add Task did not work.
+
+The root cause discovered in the source was malformed literal \\n escape sequences inside the JavaScript source. This caused the script to fail parsing, so every event handler failed.
+
+That was corrected in commit:
+**58138fc23cad0d7226c49537c445398377b25d3f**
+
+The current JavaScript was syntax-checked after the fix.
+
+## Interaction requirements
+These must actually work:
+- Sidebar navigation
+- Mobile menu and overlay
+- Add task
+- Toggle task
+- Add project
+- Advance project
+- Log income
+- Capture idea
+- Delete idea
+- Add goal
+- Advance goal
+- Modal close
+- Toasts
+- localStorage persistence
+
+## Review request
+Act as a senior frontend engineer reviewing the exact current source below.
+
+Focus on:
+1. Runtime/syntax failure risks
+2. Event handling
+3. Navigation and forms
+4. localStorage/state correctness
+5. Finance calculations
+6. Undefined variables/references
+7. DOM timing
+8. Mobile behavior
+9. Mutation/data bugs
+10. Escaping/security
+11. Maintainability
+12. Any single error that could make the entire UI non-interactive
+
+Do not redesign the product or turn it into an AI agent.
+
+Return:
+- Critical bugs
+- Medium bugs
+- Minor issues
+- Exact fixes
+- Confidence that it will work in a normal browser
+
+---
+
+# CURRENT `public/index.html`
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#ffffff">
+<title>Kyro — Personal Command Center</title>
+<style>
+:root{--bg:#f6f8fc;--card:#fff;--text:#111827;--muted:#667085;--line:#e7ebf2;--blue:#315cff;--blue2:#5b7cff;--soft:#eef3ff;--green:#16a36a;--amber:#f59e0b;--red:#ef4444;--shadow:0 12px 35px rgba(28,48,95,.07);--r:18px}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font:14px Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,textarea,select{font:inherit}
+button{cursor:pointer;border:0}.app{display:flex;min-height:100vh}.sidebar{width:238px;background:#fff;border-right:1px solid var(--line);padding:22px 14px;position:fixed;inset:0 auto 0 0;z-index:20}.brand{display:flex;align-items:center;gap:11px;padding:3px 10px 28px;font-weight:800;font-size:19px;letter-spacing:-.04em}.logo{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,#315cff,#7b61ff);display:grid;place-items:center;color:white;font-weight:900;box-shadow:0 8px 20px #315cff2b}.nav{display:grid;gap:5px}.nav button{display:flex;align-items:center;gap:12px;width:100%;padding:11px 12px;border-radius:11px;background:transparent;color:#667085;text-align:left}.nav button:hover{background:#f6f8fc;color:var(--text)}.nav button.active{background:var(--soft);color:var(--blue);font-weight:700}.icon{width:20px;text-align:center;font-size:16px}.section-label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#98a2b3;padding:20px 12px 7px}.side-footer{position:absolute;left:14px;right:14px;bottom:18px}.profile{display:flex;align-items:center;gap:10px;padding:11px;border:1px solid var(--line);border-radius:14px;background:#fafbfe}.avatar{width:32px;height:32px;border-radius:50%;background:#e9efff;color:var(--blue);display:grid;place-items:center;font-weight:800}.main{margin-left:238px;width:calc(100% - 238px);padding:0 34px 40px}.top{height:72px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);margin-bottom:28px}.top h1{font-size:15px;margin:0}.date{color:var(--muted);font-size:13px}.menu{display:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px}.view{display:none}.view.active{display:block}.hero{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px}.eyebrow{color:var(--blue);font-weight:700;font-size:12px;margin-bottom:6px}.hero h2{font-size:31px;letter-spacing:-.05em;margin:0 0 5px}.hero p{margin:0;color:var(--muted)}.primary{background:var(--blue);color:#fff;border-radius:11px;padding:11px 15px;font-weight:700;box-shadow:0 8px 20px #315cff25}.primary:hover{background:#244be0}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}.stat,.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}.stat{padding:17px}.stat-top{display:flex;justify-content:space-between;color:var(--muted);font-size:12px}.stat-value{font-size:25px;font-weight:800;letter-spacing:-.04em;margin:10px 0 3px}.stat-note{font-size:11px;color:var(--muted)}.layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.9fr);gap:18px}.card{padding:18px}.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.card-head h3{font-size:14px;margin:0}.link{background:none;color:var(--blue);font-size:12px;font-weight:700}.task{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #eef1f5}.task:last-child{border-bottom:0}.check{width:20px;height:20px;border:1.5px solid #c8d0dc;border-radius:6px;background:#fff;flex:none}.check.done{background:var(--green);border-color:var(--green);color:#fff}.task-main{min-width:0;flex:1}.task-title{font-weight:650}.task.done .task-title{text-decoration:line-through;color:#98a2b3}.task-meta{font-size:11px;color:var(--muted);margin-top:3px}.pill{font-size:10px;padding:5px 8px;border-radius:999px;background:#f1f4f8;color:#667085}.pill.blue{background:var(--soft);color:var(--blue)}.pill.green{background:#eaf9f2;color:#138a5b}.pill.amber{background:#fff6df;color:#a66b00}.project{padding:13px 0;border-bottom:1px solid #eef1f5}.project:last-child{border:0}.project-row{display:flex;justify-content:space-between;gap:10px}.project-name{font-weight:700}.progress{height:7px;background:#edf0f5;border-radius:99px;overflow:hidden;margin-top:10px}.bar{height:100%;background:linear-gradient(90deg,var(--blue),#7c6cff);border-radius:99px}.activity{display:grid;gap:14px}.activity-item{display:flex;gap:10px}.dot{width:8px;height:8px;border-radius:50%;background:var(--blue);margin-top:5px}.activity-item div:last-child{flex:1}.activity-time{font-size:11px;color:var(--muted);margin-top:2px}.page-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}.page-head h2{margin:0;font-size:27px;letter-spacing:-.04em}.toolbar{display:flex;gap:9px}.secondary{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;color:#475467}.list{display:grid;gap:10px}.row{background:#fff;border:1px solid var(--line);border-radius:15px;padding:15px;display:flex;align-items:center;gap:13px}.row-main{flex:1}.row-title{font-weight:700}.row-sub{font-size:11px;color:var(--muted);margin-top:4px}.empty{text-align:center;padding:50px 20px;color:var(--muted)}.empty strong{display:block;color:var(--text);margin-bottom:5px}.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.finance-number{font-size:26px;font-weight:800;margin-top:9px}.positive{color:var(--green)}.negative{color:var(--red)}.idea{min-height:135px}.idea p{color:#667085;line-height:1.55;margin:10px 0}.goal{display:flex;gap:13px;align-items:center}.goal-circle{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--blue);font-weight:800}.modal-backdrop{position:fixed;inset:0;background:#0b122455;backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}.modal-backdrop.open{display:flex}.modal{width:min(480px,100%);background:#fff;border-radius:20px;padding:22px;box-shadow:0 30px 80px #17254b25}.modal h3{margin:0 0 17px;font-size:19px}.field{display:grid;gap:6px;margin-bottom:13px}.field label{font-size:12px;font-weight:700;color:#475467}.field input,.field textarea,.field select{width:100%;border:1px solid #dfe4ec;border-radius:10px;padding:11px 12px;outline:none;background:#fff}.field input:focus,.field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px #315cff12}.modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px}.mobile-overlay{display:none}.toast{position:fixed;right:20px;bottom:20px;background:#111827;color:#fff;padding:12px 15px;border-radius:12px;box-shadow:0 12px 30px #0002;transform:translateY(20px);opacity:0;pointer-events:none;transition:.2s;z-index:70}.toast.show{transform:none;opacity:1}
+@media(max-width:1050px){.grid4{grid-template-columns:repeat(2,1fr)}.layout{grid-template-columns:1fr}.cards3{grid-template-columns:1fr 1fr}}
+@media(max-width:760px){.sidebar{transform:translateX(-105%);transition:.22s;box-shadow:18px 0 45px #18264a18}.sidebar.open{transform:none}.mobile-overlay.open{display:block;position:fixed;inset:0;background:#17213b35;z-index:15}.main{margin-left:0;width:100%;padding:0 17px 30px}.top{height:64px;margin-bottom:22px}.menu{display:block}.top-left{display:flex;align-items:center;gap:10px}.hero{align-items:flex-start;gap:14px}.hero h2{font-size:25px}.hero .primary{white-space:nowrap}.grid4{grid-template-columns:1fr 1fr}.cards3{grid-template-columns:1fr}.layout{grid-template-columns:1fr}}
+@media(max-width:480px){.grid4{grid-template-columns:1fr}.hero{display:block}.hero .primary{margin-top:15px}.top .date{display:none}}
+</style><style>.metricStrip{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:15px 0}.miniMetric{padding:14px;border:1px solid var(--line);border-radius:14px;background:#fbfcff}.miniMetric .num{font-size:20px;font-weight:800;margin-top:6px}.miniMetric .label{font-size:10px;color:#98a2b3;text-transform:uppercase;letter-spacing:.08em}.chartPanel{height:175px;display:flex;align-items:flex-end;gap:10px;padding:10px 4px 24px}.chartBar{flex:1;height:100%;display:flex;align-items:flex-end;position:relative}.chartBar i{width:100%;background:linear-gradient(180deg,#6b8dff,#2563eb);border-radius:7px 7px 2px 2px}.chartBar b{position:absolute;bottom:-19px;left:50%;transform:translateX(-50%);font-size:9px;color:#98a2b3}.breakdown{display:grid;gap:11px}.breakRow{display:flex;align-items:center;gap:8px;font-size:11px}.breakTrack{height:6px;background:#edf1f5;border-radius:99px;flex:1}.breakFill{height:100%;border-radius:99px;background:#2563eb}.calendarGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.calendarGrid span{font-size:9px;color:#98a2b3;text-align:center}.dayCell{min-height:48px;padding:7px;border:1px solid #edf0f4;border-radius:9px;font-size:10px}.todayCell{background:#edf4ff;border-color:#bfd0ff;color:#2563eb;font-weight:800}.eventDot{display:block;margin-top:5px;font-size:8px;color:#2563eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}@media(max-width:760px){.metricStrip{grid-template-columns:1fr}}</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="sidebar">
+  <div class="brand"><div class="logo">K</div><span>Kyro</span></div>
+  <nav class="nav" id="nav">
+    <button class="active" data-view="dashboard"><span class="icon">⌂</span>Dashboard</button>
+    <button data-view="tasks"><span class="icon">✓</span>Tasks</button>
+    <button data-view="projects"><span class="icon">▣</span>Projects</button>
+    <button data-view="finance"><span class="icon">◈</span>Finance</button>
+    <button data-view="ideas"><span class="icon">✦</span>Ideas</button>
+    <button data-view="goals"><span class="icon">◎</span>Goals</button>
+  </nav>
+  <div class="section-label">Workspace</div>
+  <nav class="nav">
+    <button data-view="activity"><span class="icon">◷</span>Activity</button>
+  </nav>
+  <div class="side-footer"><div class="profile"><div class="avatar">G</div><div><strong>Glen</strong><div style="font-size:11px;color:#98a2b3">Personal workspace</div></div></div></div>
+</aside>
+<div class="mobile-overlay" id="overlay"></div>
+<main class="main">
+<header class="top"><div class="top-left"><button class="menu" id="menu">☰</button><h1>Personal Command Center</h1></div><div class="date" id="date"></div></header>
+
+<section class="view active" id="dashboard"><div class="hero"><div><div class="eyebrow">YOUR DAY</div><h2 id="greeting">Good afternoon, Glen.</h2><p>Everything important, in one place.</p></div><div style="display:flex;gap:8px"><button class="secondary" onclick="showView('finance')">Finances</button><button class="primary" onclick="openTask()">+ Add task</button></div></div><div class="grid4"><div class="stat"><div class="stat-top"><span>Today's focus</span><span>✓</span></div><div class="stat-value" id="statTasks">0</div><div class="stat-note"><b style="color:#16a36a" id="focusCompleted">0 completed</b> · <span id="focusPlanned">5 planned</span></div></div><div class="stat"><div class="stat-top"><span>Active projects</span><span>▣</span></div><div class="stat-value" id="statProjects">0</div><div class="stat-note"><b style="color:#16a36a">+1</b> this month</div></div><div class="stat"><div class="stat-top"><span>October income</span><span>◈</span></div><div class="stat-value" id="statIncome">KSh 31,450</div><div class="stat-note"><b style="color:#16a36a">Balanced</b> against October allocation</div></div><div class="stat"><div class="stat-top"><span>Goal progress</span><span>◎</span></div><div class="stat-value" id="statGoalProgress">0%</div><div class="stat-note">Average across goals</div></div></div><div class="metricStrip"><div class="miniMetric"><div class="label">Focus time</div><div class="num">6h 20m</div><div class="tiny muted">↑ 42m vs last week</div></div><div class="miniMetric"><div class="label">Completion rate</div><div class="num">86%</div><div class="tiny muted">24 of 28 tasks</div></div><div class="miniMetric"><div class="label">Current streak</div><div class="num">9 days</div><div class="tiny muted">Personal best</div></div></div><div class="dashboardGrid"><div class="card"><div class="card-head"><h3>Today's focus</h3><button class="link" onclick="showView('tasks')">View all</button></div><div id="dashTasks"></div></div><div class="card"><div class="card-head"><h3>Weekly execution</h3><span class="pill blue">24 completed</span></div><div class="chartPanel"><div class="chartBar"><i style="height:42%"></i><b>M</b></div><div class="chartBar"><i style="height:58%"></i><b>T</b></div><div class="chartBar"><i style="height:51%"></i><b>W</b></div><div class="chartBar"><i style="height:73%"></i><b>T</b></div><div class="chartBar"><i style="height:62%"></i><b>F</b></div><div class="chartBar"><i style="height:88%"></i><b>S</b></div><div class="chartBar"><i style="height:47%"></i><b>S</b></div></div></div><div class="card"><div class="card-head"><h3>Active projects</h3><button class="link" onclick="showView('projects')">Manage</button></div><div id="dashProjects"></div></div><div class="card"><div class="card-head"><h3>October allocation</h3><span class="tiny muted" id="spendingTotal">KSh 31,450</span></div><div class="breakdown" id="spendingBreakdown"></div><div class="tiny muted" style="margin-top:15px">Allocated <b style="color:#16a36a" id="allocationCheck">KSh 31,450</b> of October income.</div></div><div class="card"><div class="card-head"><h3>Upcoming</h3><button class="link" onclick="showView('tasks')">Open tasks</button></div><div id="upcoming"></div></div><div class="card"><div class="card-head"><h3>Recent activity</h3><button class="link" onclick="showView('activity')">See all</button></div><div class="activity" id="dashActivity"></div></div><div class="card" style="grid-column:1/-1"><div class="card-head"><h3>October calendar</h3><span class="pill green">4 important dates</span></div><div class="calendarGrid"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span><div class="dayCell ">1</div><div class="dayCell ">2</div><div class="dayCell ">3</div><div class="dayCell ">4</div><div class="dayCell ">5</div><div class="dayCell ">6</div><div class="dayCell todayCell">7<span class="eventDot">● Analysis</span></div><div class="dayCell ">8<span class="eventDot">● Kcreatives</span></div><div class="dayCell ">9</div><div class="dayCell ">10<span class="eventDot">● Study</span></div><div class="dayCell ">11</div><div class="dayCell ">12</div><div class="dayCell ">13</div><div class="dayCell ">14<span class="eventDot">● Review</span></div><div class="dayCell ">15</div><div class="dayCell ">16</div><div class="dayCell ">17</div><div class="dayCell ">18</div><div class="dayCell ">19</div><div class="dayCell ">20</div><div class="dayCell ">21</div><div class="dayCell ">22</div><div class="dayCell ">23</div><div class="dayCell ">24</div><div class="dayCell ">25</div><div class="dayCell ">26</div><div class="dayCell ">27</div><div class="dayCell ">28</div><div class="dayCell ">29</div><div class="dayCell ">30</div><div class="dayCell ">31</div></div></div></div></section>
+
+<section class="view" id="tasks"><div class="page-head"><h2>Tasks</h2><div class="toolbar"><button class="primary" onclick="openTask()">+ Add task</button></div></div><div class="list" id="taskList"></div></section>
+<section class="view" id="projects"><div class="page-head"><h2>Projects</h2><button class="primary" onclick="openProject()">+ Add project</button></div><div class="cards3" id="projectList"></div></section>
+<section class="view" id="finance"><div class="page-head"><h2>Finance</h2><button class="primary" onclick="openFinance()">+ Log income</button></div><div class="grid4" id="financeStats"></div><div class="card"><div class="card-head"><h3>Recent income</h3></div><div class="list" id="incomeList"></div></div></section>
+<section class="view" id="ideas"><div class="page-head"><h2>Ideas</h2><button class="primary" onclick="openIdea()">+ Capture idea</button></div><div class="cards3" id="ideaList"></div></section>
+<section class="view" id="goals"><div class="page-head"><h2>Goals</h2><button class="primary" onclick="openGoal()">+ Add goal</button></div><div class="list" id="goalList"></div></section>
+<section class="view" id="activity"><div class="page-head"><h2>Activity</h2></div><div class="card"><div class="activity" id="activityList"></div></div></section>
+</main></div>
+
+<div class="modal-backdrop" id="modal"><div class="modal" id="modalBody"></div></div><div class="toast" id="toast"></div>
+
+<script>
+const KEY='kyro-command-center-v3';
+const seed={
+ tasks:[
+  {id:1,title:'Review structural analysis',due:'Today',priority:'High',done:false},
+  {id:2,title:'Work on Kcreatives homepage',due:'Today',priority:'High',done:false},
+  {id:3,title:'Study for 2 hours',due:'Today',priority:'Medium',done:false},
+  {id:4,title:'Review Kyro project roadmap',due:'Today',priority:'Medium',done:false},
+  {id:5,title:'Send Golf Hotel proposal',due:'Tomorrow',priority:'High',done:false}
+ ],
+ projects:[
+  {id:1,name:'Kcreatives',desc:'Branding, graphic design and client work',progress:82},
+  {id:2,name:'Kyro',desc:'Personal command center',progress:48},
+  {id:3,name:'Fixly',desc:'Product development',progress:64},
+  {id:4,name:'MMUST HostelHub',desc:'Student booking platform',progress:41}
+ ],
+ income:[{id:1,amount:31450,source:'October income',date:'October 2026'}],
+ spending:[{name:'Needs',amount:14467},{name:'Savings',amount:8177},{name:'Business',amount:5032},{name:'Other',amount:3774}],
+ ideas:[
+  {id:1,title:'Kcreatives client portal',body:'A simple client workspace for projects, deliverables and updates.'},
+  {id:2,title:'Student command center',body:'A focused workspace for university students.'}
+ ],
+ goals:[
+  {id:1,title:'Build Kcreatives into a consistent side business',progress:42},
+  {id:2,title:'Maintain a strong university performance',progress:58},
+  {id:3,title:'Build a 3-month emergency buffer',progress:31},
+  {id:4,title:'Ship Kyro V1',progress:72}
+ ],
+ activity:[
+  {text:'Logged October income — KSh 31,450',time:'Today'},
+  {text:'Kyro personal command center updated',time:'Today'},
+  {text:'Kcreatives moved to 82%',time:'Today'}
+ ]
+};
+let state;
+try{state=JSON.parse(localStorage.getItem(KEY)||'null')||seed}catch(e){state=seed}
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+const money=n=>'KSh '+Number(n||0).toLocaleString('en-KE');
+const incomeTotal=()=>state.income.reduce((s,x)=>s+Number(x.amount||0),0);
+const allocationTotal=()=>state.spending.reduce((s,x)=>s+Number(x.amount||0),0);
+const goalAverage=()=>state.goals.length?Math.round(state.goals.reduce((s,x)=>s+Number(x.progress||0),0)/state.goals.length):0;
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+function log(text){state.activity.unshift({text,time:'Just now'});state.activity=state.activity.slice(0,20);save()}
+function showView(id){
+ document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));
+ document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===id));
+ $('sidebar').classList.remove('open');$('overlay').classList.remove('open');render();
+}
+function openModal(html){$('modalBody').innerHTML=html;$('modal').classList.add('open');setTimeout(()=>{const x=$('modalBody').querySelector('input');if(x)x.focus()},0)}
+function closeModal(){$('modal').classList.remove('open')}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(window.__kyroToast);window.__kyroToast=setTimeout(()=>t.classList.remove('show'),1800)}
+function taskHTML(t){return '<div class="task '+(t.done?'done':'')+'"><button type="button" class="check '+(t.done?'done':'')+'" data-action="toggle-task" data-id="'+t.id+'">'+(t.done?'✓':'')+'</button><div class="task-main"><div class="task-title">'+esc(t.title)+'</div><div class="task-meta">'+esc(t.due)+' · '+esc(t.priority)+'</div></div><span class="pill '+(t.priority==='High'?'amber':'')+'">'+(t.done?'Done':esc(t.priority))+'</span></div>'}
+function projectHTML(p){return '<div class="project"><div class="project-row"><span class="project-name">'+esc(p.name)+'</span><span class="pill">'+p.progress+'%</span></div><div class="progress"><div class="bar" style="width:'+p.progress+'%"></div></div></div>'}
+function projectCard(p){return '<div class="card"><span class="pill blue">Project</span><h3>'+esc(p.name)+'</h3><p style="color:#667085;line-height:1.5">'+esc(p.desc)+'</p><div class="project-row"><span style="font-size:12px;color:#667085">Progress</span><strong>'+p.progress+'%</strong></div><div class="progress"><div class="bar" style="width:'+p.progress+'%"></div></div><div style="margin-top:14px"><button type="button" class="secondary" data-action="advance-project" data-id="'+p.id+'">Advance</button></div></div>'}
+function activityHTML(a){return '<div class="activity-item"><span class="dot"></span><div><div>'+esc(a.text)+'</div><div class="activity-time">'+esc(a.time)+'</div></div></div>'}
+function render(){
+ $('statTasks').textContent=state.tasks.filter(t=>!t.done&&t.due==='Today').length;
+ $('statProjects').textContent=state.projects.length;
+ $('statIncome').textContent=money(incomeTotal());
+ $('spendingTotal').textContent=money(allocationTotal());
+ $('allocationCheck').textContent=money(allocationTotal());
+ $('spendingBreakdown').innerHTML=state.spending.map(x=>{const pct=allocationTotal()?Math.round(x.amount/allocationTotal()*100):0;return '<div class="breakRow"><span>'+esc(x.name)+'</span><div class="breakTrack"><div class="breakFill" style="width:'+pct+'%"></div></div><b>'+pct+'%</b></div>'}).join('');
+ $('dashTasks').innerHTML=state.tasks.filter(t=>t.due==='Today').slice(0,5).map(taskHTML).join('')||'<div class="empty"><strong>No tasks today</strong>Your day is clear.</div>';
+ $('taskList').innerHTML=state.tasks.map(taskHTML).join('')||'<div class="card empty"><strong>No tasks yet</strong>Add your first task.</div>';
+ $('dashProjects').innerHTML=state.projects.slice(0,4).map(projectHTML).join('');
+ $('projectList').innerHTML=state.projects.map(projectCard).join('');
+ $('upcoming').innerHTML=state.tasks.filter(t=>t.due!=='Today'&&!t.done).slice(0,4).map(t=>'<div class="task"><div class="task-main"><div class="task-title">'+esc(t.title)+'</div><div class="task-meta">'+esc(t.due)+'</div></div><span class="pill">'+esc(t.priority)+'</span></div>').join('')||'<div class="empty">Nothing upcoming.</div>';
+ $('dashActivity').innerHTML=state.activity.slice(0,5).map(activityHTML).join('');
+ $('activityList').innerHTML=state.activity.map(activityHTML).join('');
+ const total=incomeTotal();
+ $('financeStats').innerHTML='<div class="stat"><div class="stat-top">Income</div><div class="finance-number positive">'+money(total)+'</div><div class="stat-note">logged</div></div><div class="stat"><div class="stat-top">Entries</div><div class="finance-number">'+state.income.length+'</div><div class="stat-note">income records</div></div><div class="stat"><div class="stat-top">Average</div><div class="finance-number">'+money(state.income.length?total/state.income.length:0)+'</div><div class="stat-note">per entry</div></div><div class="stat"><div class="stat-top">Currency</div><div class="finance-number">KES</div><div class="stat-note">Kenyan shilling</div></div>';
+ $('incomeList').innerHTML=state.income.map(x=>'<div class="row"><div class="row-main"><div class="row-title">'+money(x.amount)+'</div><div class="row-sub">'+esc(x.source)+' · '+esc(x.date)+'</div></div></div>').join('');
+ $('ideaList').innerHTML=state.ideas.map(x=>'<div class="card idea"><span class="pill blue">Idea</span><h3>'+esc(x.title)+'</h3><p>'+esc(x.body)+'</p><button type="button" class="link" data-action="delete-idea" data-id="'+x.id+'">Delete</button></div>').join('');
+ $('goalList').innerHTML=state.goals.map(x=>'<div class="row goal"><div class="goal-circle">'+x.progress+'%</div><div class="row-main"><div class="row-title">'+esc(x.title)+'</div><div class="progress"><div class="bar" style="width:'+x.progress+'%"></div></div></div><button type="button" class="secondary" data-action="advance-goal" data-id="'+x.id+'">+10%</button></div>').join('');
+}
+function openTask(){openModal('<h3>Add task</h3><form id="taskForm"><div class="field"><label>Task</label><input id="fTitle" required placeholder="What needs to be done?"></div><div class="field"><label>Due</label><select id="fDue"><option>Today</option><option>Tomorrow</option><option>This week</option></select></div><div class="field"><label>Priority</label><select id="fPriority"><option>Medium</option><option>High</option><option>Low</option></select></div><div class="modal-actions"><button type="button" class="secondary" data-action="close-modal">Cancel</button><button type="submit" class="primary">Add task</button></div></form>')}
+function openProject(){openModal('<h3>Add project</h3><form id="projectForm"><div class="field"><label>Name</label><input id="pName" required placeholder="Project name"></div><div class="field"><label>Description</label><input id="pDesc" placeholder="What is this project?"></div><div class="modal-actions"><button type="button" class="secondary" data-action="close-modal">Cancel</button><button type="submit" class="primary">Add project</button></div></form>')}
+function openFinance(){openModal('<h3>Log income</h3><form id="incomeForm"><div class="field"><label>Amount (KSh)</label><input id="iAmount" type="number" min="1" required placeholder="0"></div><div class="field"><label>Source</label><input id="iSource" required placeholder="Salary, client, side hustle..."></div><div class="modal-actions"><button type="button" class="secondary" data-action="close-modal">Cancel</button><button type="submit" class="primary">Log income</button></div></form>')}
+function openIdea(){openModal('<h3>Capture idea</h3><form id="ideaForm"><div class="field"><label>Title</label><input id="ideaTitle" required placeholder="Give the idea a name"></div><div class="field"><label>Thought</label><textarea id="ideaBody" rows="5" placeholder="Write it down..."></textarea></div><div class="modal-actions"><button type="button" class="secondary" data-action="close-modal">Cancel</button><button type="submit" class="primary">Save idea</button></div></form>')}
+function openGoal(){openModal('<h3>Add goal</h3><form id="goalForm"><div class="field"><label>Goal</label><input id="goalTitle" required placeholder="What are you working toward?"></div><div class="modal-actions"><button type="button" class="secondary" data-action="close-modal">Cancel</button><button type="submit" class="primary">Add goal</button></div></form>')}
+document.addEventListener('click',e=>{
+ const b=e.target.closest('[data-view]');if(b){e.preventDefault();showView(b.dataset.view);return}
+ const a=e.target.closest('[data-action]');if(!a)return;
+ e.preventDefault();const id=Number(a.dataset.id);
+ if(a.dataset.action==='open-task')openTask();
+ else if(a.dataset.action==='close-modal')closeModal();
+ else if(a.dataset.action==='toggle-task'){const t=state.tasks.find(x=>x.id===id);if(t){t.done=!t.done;log((t.done?'Completed: ':'Reopened: ')+t.title);render()}}
+ else if(a.dataset.action==='advance-project'){const p=state.projects.find(x=>x.id===id);if(p){p.progress=Math.min(100,p.progress+10);log('Advanced '+p.name+' to '+p.progress+'%');render()}}
+ else if(a.dataset.action==='advance-goal'){const g=state.goals.find(x=>x.id===id);if(g){g.progress=Math.min(100,g.progress+10);log('Advanced goal: '+g.title);render()}}
+ else if(a.dataset.action==='delete-idea'){state.ideas=state.ideas.filter(x=>x.id!==id);log('Deleted an idea');render()}
+});
+document.addEventListener('submit',e=>{
+ if(e.target.id==='taskForm'){e.preventDefault();const title=$('fTitle').value.trim();if(!title)return;state.tasks.unshift({id:Date.now(),title,due:$('fDue').value,priority:$('fPriority').value,done:false});log('Added task: '+title);closeModal();toast('Task added');render()}
+ if(e.target.id==='projectForm'){e.preventDefault();const name=$('pName').value.trim();if(!name)return;state.projects.unshift({id:Date.now(),name,desc:$('pDesc').value.trim(),progress:0});log('Created project: '+name);closeModal();toast('Project created');render()}
+ if(e.target.id==='incomeForm'){e.preventDefault();const amount=Number($('iAmount').value);const source=$('iSource').value.trim();if(!Number.isFinite(amount)||amount<=0||!source)return;state.income.unshift({id:Date.now(),amount,source,date:new Date().toLocaleDateString('en-KE',{month:'long',year:'numeric'})});log('Logged '+money(amount)+' from '+source);closeModal();toast('Income logged');render()}
+ if(e.target.id==='ideaForm'){e.preventDefault();const title=$('ideaTitle').value.trim();if(!title)return;state.ideas.unshift({id:Date.now(),title,body:$('ideaBody').value.trim()});log('Captured idea: '+title);closeModal();toast('Idea saved');render()}
+ if(e.target.id==='goalForm'){e.preventDefault();const title=$('goalTitle').value.trim();if(!title)return;state.goals.unshift({id:Date.now(),title,progress:0});log('Created goal: '+title);closeModal();toast('Goal added');render()}
+});
+$('menu').addEventListener('click',()=>{$('sidebar').classList.add('open');$('overlay').classList.add('open')});
+$('overlay').addEventListener('click',()=>{$('sidebar').classList.remove('open');$('overlay').classList.remove('open')});
+$('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});
+$('greeting').textContent=(new Date().getHours()<12?'Good morning':new Date().getHours()<17?'Good afternoon':'Good evening')+', Glen.';
+$('date').textContent=new Date().toLocaleDateString('en-KE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+render();
+</script>
+</body>
+</html>
+```
