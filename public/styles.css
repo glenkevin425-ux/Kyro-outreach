@@ -168,3 +168,63 @@ aside{background:rgba(255,255,255,.6)}
 .toast{animation:toast .55s cubic-bezier(.34,1.56,.64,1)}
 @keyframes toast{from{opacity:0;transform:translateY(34px) scale(.8)}}
 @media(prefers-reduced-motion:reduce){#intro{display:none}.aur i{animation:none!important}}
+
+
+/* Responsive navigation shell */
+.hlogo{display:none;font:700 18px "Bricolage Grotesque",Inter,sans-serif;letter-spacing:-.03em}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.chk:before{content:"";position:absolute;inset:-12px}
+.main{transition:margin-left .3s var(--ease)}
+aside{transition:transform .28s var(--ease),width .3s var(--ease)}
+#rail{position:absolute;left:14px;right:14px;bottom:18px;width:auto}
+#rail svg{transition:transform .3s var(--ease)}
+.rail aside{width:76px}
+.rail .main{margin-left:76px}
+.rail .nl{display:none}
+.rail .nav{justify-content:center;padding-left:0;padding-right:0}
+.rail .brand{justify-content:center;padding-left:0;padding-right:0}
+.rail #rail svg{transform:rotate(180deg)}
+#tabs{display:none;position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:40;background:rgba(255,255,255,.82);backdrop-filter:blur(20px) saturate(1.6);-webkit-backdrop-filter:blur(20px) saturate(1.6);border:1px solid rgba(255,255,255,.9);border-radius:22px;box-shadow:0 0 0 1px rgba(10,16,32,.06),0 24px 48px -16px rgba(10,16,32,.35);transition:opacity .2s}
+#tabset{display:grid;grid-template-columns:repeat(5,1fr);position:relative;z-index:1}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 0 8px;border:0;background:none;color:var(--mut);font-size:10.5px;font-weight:650}
+.tab svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
+.tab.on{color:var(--blue)}
+.tab.on svg{transform:translateY(-1px) scale(1.12)}
+#tpill{position:absolute;left:0;top:5px;bottom:5px;width:20%;padding:0 5px;transition:transform .5s cubic-bezier(.34,1.56,.64,1)}
+#tpill:after{content:"";display:block;height:100%;border-radius:17px;background:var(--soft)}
+#fab{display:none;position:fixed;right:18px;bottom:calc(96px + env(safe-area-inset-bottom));width:56px;height:56px;border:0;border-radius:20px;color:#fff;font-size:30px;line-height:1;place-items:center;background:linear-gradient(135deg,#3a74ff,#1d4fe0);box-shadow:0 18px 30px -10px rgba(29,91,255,.7),inset 0 1px 0 rgba(255,255,255,.35);z-index:41;transition:transform .25s var(--ease),opacity .2s}
+#fab:active{transform:scale(.88) rotate(90deg)}
+@media(max-width:820px){
+  .hlogo{display:flex;align-items:center;gap:9px;margin-right:auto}
+  header{padding:calc(10px + env(safe-area-inset-top)) 16px 10px}
+  header h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  header .btn.p{display:none}
+  header .sl,header kbd{display:none}
+  header .btn{width:40px;height:40px;padding:0;display:grid;place-items:center;border-radius:12px}
+  main{padding:18px 16px calc(120px + env(safe-area-inset-bottom))}
+  #tabs{display:block}
+  #fab{display:grid}
+  body.menu #tabs,body.menu #fab{opacity:0;pointer-events:none}
+  aside{width:min(300px,84vw)}
+  .rail aside{width:min(300px,84vw)}
+  .rail .main{margin-left:0}
+  .rail .nl{display:inline}
+  .rail .nav{justify-content:flex-start;padding-left:10px;padding-right:10px}
+  #rail{display:none}
+  #modal{align-items:flex-end;padding:0}
+  .sheet{max-width:none;border-radius:26px 26px 0 0;padding:12px 20px calc(24px + env(safe-area-inset-bottom));animation:sheetUp .45s var(--ease)}
+  .sheet:before{content:"";display:block;width:42px;height:4px;border-radius:4px;background:#d5dbea;margin:0 auto 18px}
+  input,select{font-size:16px}
+  .btn.s{min-height:34px;padding:6px 12px}
+  #toasts{bottom:calc(96px + env(safe-area-inset-bottom))}
+}
+@media(hover:none){
+  #glow{display:none}
+  .card:hover:before{opacity:0}
+  .chip:hover{transform:none}
+}
+@keyframes sheetUp{from{transform:translateY(100%)}}
+html{-webkit-text-size-adjust:100%}
+*{-webkit-tap-highlight-color:transparent}
+button{touch-action:manipulation}
+body{overscroll-behavior-y:none}
