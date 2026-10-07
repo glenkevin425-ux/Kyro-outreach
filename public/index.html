@@ -64,7 +64,8 @@ const seed={
   {id:3,name:'Fixly',desc:'Product development',progress:64},
   {id:4,name:'MMUST HostelHub',desc:'Student booking platform',progress:41}
  ],
- income:[{id:1,amount:31450,source:'October income',date:'October 2026'}],\n spending:[{name:'Needs',amount:14467},{name:'Savings',amount:8177},{name:'Business',amount:5032},{name:'Other',amount:3774}],
+ income:[{id:1,amount:31450,source:'October income',date:'October 2026'}],
+ spending:[{name:'Needs',amount:14467},{name:'Savings',amount:8177},{name:'Business',amount:5032},{name:'Other',amount:3774}],
  ideas:[
   {id:1,title:'Kcreatives client portal',body:'A simple client workspace for projects, deliverables and updates.'},
   {id:2,title:'Student command center',body:'A focused workspace for university students.'}
@@ -106,7 +107,10 @@ function activityHTML(a){return '<div class="activity-item"><span class="dot"></
 function render(){
  $('statTasks').textContent=state.tasks.filter(t=>!t.done&&t.due==='Today').length;
  $('statProjects').textContent=state.projects.length;
- $('statIncome').textContent=money(incomeTotal());\n $('spendingTotal').textContent=money(allocationTotal());\n $('allocationCheck').textContent=money(allocationTotal());\n $('spendingBreakdown').innerHTML=state.spending.map(x=>{const pct=allocationTotal()?Math.round(x.amount/allocationTotal()*100):0;return '<div class="breakRow"><span>'+esc(x.name)+'</span><div class="breakTrack"><div class="breakFill" style="width:'+pct+'%"></div></div><b>'+pct+'%</b></div>'}).join('');
+ $('statIncome').textContent=money(incomeTotal());
+ $('spendingTotal').textContent=money(allocationTotal());
+ $('allocationCheck').textContent=money(allocationTotal());
+ $('spendingBreakdown').innerHTML=state.spending.map(x=>{const pct=allocationTotal()?Math.round(x.amount/allocationTotal()*100):0;return '<div class="breakRow"><span>'+esc(x.name)+'</span><div class="breakTrack"><div class="breakFill" style="width:'+pct+'%"></div></div><b>'+pct+'%</b></div>'}).join('');
  $('dashTasks').innerHTML=state.tasks.filter(t=>t.due==='Today').slice(0,5).map(taskHTML).join('')||'<div class="empty"><strong>No tasks today</strong>Your day is clear.</div>';
  $('taskList').innerHTML=state.tasks.map(taskHTML).join('')||'<div class="card empty"><strong>No tasks yet</strong>Add your first task.</div>';
  $('dashProjects').innerHTML=state.projects.slice(0,4).map(projectHTML).join('');
