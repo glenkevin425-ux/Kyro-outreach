@@ -177,6 +177,15 @@
     setTimeout(function () { if (el.parentNode) el.remove(); }, 2300);
   })();
 
+  function drawTabs() {
+    var T = ['dashboard', 'tasks', 'projects', 'finance'], L = {dashboard:'Home', tasks:'Tasks', projects:'Projects', finance:'Finance'};
+    var idx = T.indexOf(state.view); if (idx < 0) idx = 4;
+    $('tabset').innerHTML = T.map(function (v) {
+      return '<button class="tab' + (v === state.view ? ' on' : '') + '" data-view="' + v + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + ICONS[v] + '</svg><span>' + L[v] + '</span></button>';
+    }).join('') + '<button class="tab' + (idx === 4 ? ' on' : '') + '" data-action="menu"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg><span>More</span></button>';
+    $('tpill').style.transform = 'translateX(' + idx * 100 + '%)';
+  }
+  try { if (localStorage.getItem('kyro.rail')) document.body.classList.add('rail'); } catch (e) {}
   var lastView = null;
   function ringsSvg(vals) {
     var R = [86, 68, 50, 32];
@@ -203,7 +212,7 @@
   function afterRender() {
     var fresh = lastView !== state.view; lastView = state.view;
     if (fresh) enter(); else $('main').classList.remove('enter');
-    pillTo();
+    pillTo(); drawTabs();
     Array.prototype.forEach.call(document.querySelectorAll('.ring'), function (r) {
       if (fresh) requestAnimationFrame(function () { requestAnimationFrame(function () { r.style.strokeDashoffset = r.getAttribute('data-to'); }); });
       else { r.style.transition = 'none'; r.style.strokeDashoffset = r.getAttribute('data-to'); }
@@ -410,6 +419,11 @@
       animBar(g.id, o, g.pct); if (g.pct >= 100) burst(innerWidth / 2, innerHeight / 3, 200);
     },
     'palette': openPal,
+    'rail': function () {
+      var on = document.body.classList.toggle('rail');
+      try { localStorage.setItem('kyro.rail', on ? '1' : ''); } catch (e) {}
+      setTimeout(pillTo, 330);
+    },
     'export': function () {
       var b = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'}), a = document.createElement('a');
       a.href = URL.createObjectURL(b); a.download = 'kyro-backup-' + new Date().toISOString().slice(0, 10) + '.json';
@@ -433,6 +447,7 @@
     if (pi) { palRun(+pi.getAttribute('data-pi')); return; }
     if (!el) return;
     try {
+      if (!RM && navigator.vibrate && 'ontouchstart' in window) navigator.vibrate(8);
       if (el.dataset.view) go(el.dataset.view);
       else if (ACTIONS[el.dataset.action]) ACTIONS[el.dataset.action](el);
     } catch (err) { console.error(err); toast('Something went wrong. Please try again.'); }
@@ -476,6 +491,21 @@
     if (t.classList.contains('hx')) { t.style.setProperty('--rx', '0deg'); t.style.setProperty('--ry', '0deg'); } else t.style.transform = '';
   });
   document.addEventListener('input', function (e) { if (e.target.id === 'pq') palDraw(e.target.value); });
+  var sheetEl = null, sy = 0, sdy = 0;
+  document.addEventListener('touchstart', function (e) {
+    var sh = e.target.closest ? e.target.closest('.sheet') : null;
+    if (!sh || innerWidth > 820 || e.touches[0].clientY - sh.getBoundingClientRect().top > 56) return;
+    sheetEl = sh; sy = e.touches[0].clientY; sdy = 0; sh.style.animation = 'none'; sh.style.transition = 'none';
+  }, {passive:true});
+  document.addEventListener('touchmove', function (e) {
+    if (!sheetEl) return;
+    sdy = Math.max(0, e.touches[0].clientY - sy); sheetEl.style.transform = 'translateY(' + sdy + 'px)';
+  }, {passive:true});
+  document.addEventListener('touchend', function () {
+    if (!sheetEl) return;
+    var sh = sheetEl; sheetEl = null;
+    if (sdy > 100) closeModal(); else { sh.style.transition = 'transform .3s cubic-bezier(.2,.8,.2,1)'; sh.style.transform = ''; }
+  });
   document.addEventListener('pointermove', function (e) {
     var c = e.target.closest ? e.target.closest('.card') : null;
     if (!c) return;
