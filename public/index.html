@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f4f7ff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Kyro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="styles.css">
@@ -10,18 +13,21 @@
 <body>
 <div class="aur"><i></i><i></i><i></i></div><div id="glow"></div>
 <div class="app">
-  <aside id="side"><div class="brand"><span class="mark"></span>Kyro</div><i id="pill"></i><nav id="nav"></nav></aside>
+  <aside id="side"><div class="brand"><span class="mark"></span><span class="bt">Kyro</span></div><i id="pill"></i><nav id="nav"></nav><button class="nav" id="rail" data-action="rail" aria-label="Collapse sidebar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span class="nl">Collapse</span></button></aside>
   <div id="ov" data-action="close-menu"></div>
   <div class="main">
     <header>
+      <span class="hlogo"><span class="mark"></span>Kyro</span>
       <button class="btn" id="menu" data-action="menu" aria-label="Open menu">Menu</button>
       <h1 id="title">Dashboard</h1>
-      <button class="btn" data-action="palette">Search<kbd>Ctrl K</kbd></button>
+      <button class="btn" data-action="palette" aria-label="Search"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span class="sl">Search</span><kbd>Ctrl K</kbd></button>
       <button class="btn p" data-action="open-form" data-form="task">Add task<kbd>N</kbd></button>
     </header>
     <main id="main"></main>
   </div>
 </div>
+<nav id="tabs" aria-label="Primary"><i id="tpill"></i><div id="tabset"></div></nav>
+<button id="fab" data-action="open-form" data-form="task" aria-label="Add task">+</button>
 <div id="modal" hidden></div>
 <div id="pal" hidden></div>
 <input type="file" id="imp" accept="application/json" hidden>
