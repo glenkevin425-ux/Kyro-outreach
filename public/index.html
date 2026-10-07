@@ -140,5 +140,7 @@ window.addEventListener('keydown',e=>{
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#command')?.focus()}
   if(e.key==='Escape'){$('#modal')?.classList.remove('open');$('#planModal')?.remove()}
 });
+updateTimeContext();
 render();
+setInterval(updateTimeContext,60000);
 </script></body></html>
