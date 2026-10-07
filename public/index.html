@@ -20,7 +20,7 @@ main{margin-left:248px;min-height:100vh}.top{height:66px;border-bottom:1px solid
 <nav class="nav"><button class="active" data-v="home"><span>⌂</span><span>Command</span></button><button data-v="today"><span>◷</span><span>Today</span></button><button data-v="projects"><span>▦</span><span>Projects</span></button><button data-v="automations"><span>⌁</span><span>Automations</span></button><button data-v="inbox"><span>◌</span><span>Memory</span></button><button data-v="insights"><span>↗</span><span>Insights</span></button></nav><div class="section">Workspace</div><nav class="nav"><button data-v="connections"><span>⌘</span><span>Connections</span></button></nav><div class="sidebottom"><div class="mini"><div class="avatar">GK</div><div><b>Glen Kevin</b><small>Owner · Online</small></div></div></div></aside>
 <main><header class="top"><div class="crumb">Kyro / <b id="crumb">Command</b></div><div class="topactions"><div class="sys"><i></i>Kyro is online</div><button class="btn" id="reset">Reset</button><button class="btn primary" id="new">+ New task</button></div></header>
 <section class="content">
-<div class="view active" id="home"><div class="hero"><div><div class="eyebrow">Tuesday · October 6, 2026</div><h1>Good evening, Glen.</h1><p>One place to think, plan, build, and let Kyro handle the repetitive parts.</p></div></div>
+<div class="view active" id="home"><div class="hero"><div><div class="eyebrow" id="dateLabel"></div><h1 id="greeting">Good morning, Glen.</h1><p>One place to think, plan, build, and let Kyro handle the repetitive parts.</p></div></div>
 <div class="command"><div class="commandrow"><div class="spark">✦</div><input id="command" placeholder="Ask Kyro to do something…  e.g. “Plan my work tomorrow”"><span class="shortcut">⌘ K</span></div></div>
 <div class="grid4"><div class="card stat"><label>Today</label><strong id="done">4</strong><small>tasks completed</small></div><div class="card stat"><label>Focus</label><strong>82%</strong><small>+9% this week</small></div><div class="card stat"><label>Active work</label><strong>3</strong><small>projects moving</small></div><div class="card stat"><label>Time saved</label><strong>3.8h</strong><small>by automations</small></div></div>
 <div class="layout"><div class="card working"><div class="worktop"><i class="pulse"></i><b>Kyro is working</b><span>Live execution</span></div><div class="worktitle">Build the next version of Kyro</div><div class="workdesc">Turning your idea into an operating system: command layer, project context, automation hooks, and a cleaner visual language.</div><div class="steps"><div class="step done"><i>✓</i>Define the new product direction</div><div class="step done"><i>✓</i>Rebuild the interface foundation</div><div class="step active"><i>→</i>Design the Kyro command layer</div><div class="step"><i>4</i>Connect real tools</div></div></div>
@@ -58,6 +58,13 @@ function render(){
     const pill=card.querySelector('.pill');
     if(pill&&typeof status==='boolean'){pill.textContent=status?'Connected':'Connect';pill.className='pill '+(status?'green':'')}
   });
+}
+function updateTimeContext(){
+  const now=new Date();
+  const hour=now.getHours();
+  const greeting=hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
+  $('#greeting').textContent=greeting+', Glen.';
+  $('#dateLabel').textContent=new Intl.DateTimeFormat('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(now);
 }
 function esc(v){return String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function complete(i){d.tasks.splice(i,1);d.done++;save();toast('Task completed');render()}
