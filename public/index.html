@@ -12,13 +12,16 @@ main{margin-left:248px;min-height:100vh}.top{height:66px;border-bottom:1px solid
 .board{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}.col{background:#f8fafc;border:1px solid var(--line);border-radius:16px;padding:13px;min-height:350px}.colhead{display:flex;justify-content:space-between;color:#747c87;font-size:10px;margin-bottom:10px}.task{background:#fff;border:1px solid #e4e7ec;border-radius:12px;padding:12px;margin-bottom:8px;transition:.2s;box-shadow:0 3px 10px rgba(16,24,40,.035)}.task:hover{border-color:#b9c7e5;transform:translateY(-1px);box-shadow:0 8px 20px rgba(56,103,255,.08)}.task b{font-size:11px}.task p{font-size:9px;color:#69717c;line-height:1.45;margin:7px 0}.taskfoot{display:flex;justify-content:space-between;align-items:center}.pill{padding:4px 7px;border-radius:20px;background:#f2f4f7;color:#667085;font-size:9px}.pill.green{background:#ecfdf3;color:#039855}.pill.blue{background:#eef4ff;color:#3867ff}.pill.green{background:#10251b;color:#6fd6a1}.pill.blue{background:#121c30;color:#91aaff}.table{width:100%;border-collapse:collapse}.table th{text-align:left;padding:10px;color:#5e6672;font-size:9px;text-transform:uppercase;letter-spacing:.09em;border-bottom:1px solid var(--line)}.table td{padding:14px 10px;border-bottom:1px solid #eaecf0;color:#667085;font-size:10px}.table tr:last-child td{border-bottom:0}.name{color:#101828!important;font-weight:600}
 .compose{display:grid;grid-template-columns:.7fr 1.3fr;gap:11px}.field{display:grid;gap:6px;margin-bottom:13px}.field label{font-size:9px;text-transform:uppercase;letter-spacing:.09em;color:#68707c}.field input,.field textarea{border:1px solid #d0d5dd;background:#fff;color:#101828;border-radius:10px;padding:10px;outline:0}.field textarea{min-height:190px;resize:vertical}.idea{padding:11px;border:1px solid var(--line);background:#fff;border-radius:11px;margin-bottom:8px;box-shadow:0 3px 10px rgba(16,24,40,.03)}.idea b{font-size:10px}.idea p{font-size:9px;color:#69717c;margin:4px 0 0}
 .modal{display:none;position:fixed;inset:0;background:rgba(16,24,40,.28);backdrop-filter:blur(8px);place-items:center;z-index:20}.modal.open{display:grid}.modalbox{width:min(560px,calc(100% - 30px));background:#fff;border:1px solid #e4e7ec;border-radius:18px;padding:20px;box-shadow:0 30px 100px rgba(16,24,40,.2)}.modalbox h2{margin:0 0 5px;font-size:18px}.modalbox p{margin:0 0 18px;color:#667085;font-size:10px}.modalactions{display:flex;justify-content:flex-end;gap:8px}.toast{display:none;position:fixed;right:25px;bottom:25px;background:#101828;color:#fff;padding:10px 13px;border-radius:10px;font-weight:650;font-size:11px;z-index:30;box-shadow:0 20px 60px rgba(16,24,40,.22)}
-@media(max-width:900px){.side{width:68px}.brand div:not(.mark),.nav button span:not(:first-child),.mini div:not(.avatar),.section{display:none}.brand{padding-left:10px}.nav button{justify-content:center}.top,main{margin-left:68px}.content{padding:22px}.grid4{grid-template-columns:repeat(2,1fr)}.layout,.compose{grid-template-columns:1fr}.hero{align-items:start;flex-direction:column}.top{padding:0 18px}}
+.mobileMenu{display:none;border:1px solid var(--line);background:#fff;color:#101828;border-radius:10px;width:38px;height:38px;align-items:center;justify-content:center;font-size:19px;box-shadow:0 2px 8px rgba(16,24,40,.06)}.menuOverlay{display:none}
+@media(max-width:900px){.side{width:248px;transform:translateX(-100%);transition:transform .22s ease;box-shadow:18px 0 45px rgba(16,24,40,.12)}.side.mobile-open{transform:translateX(0)}.brand div:not(.mark),.nav button span:not(:first-child),.mini div:not(.avatar),.section{display:none}.brand{padding-left:10px}.nav button{justify-content:center}.top,main{margin-left:0}.top{padding:0 18px}.mobileMenu{display:flex}.menuOverlay{position:fixed;inset:0;background:rgba(16,24,40,.25);backdrop-filter:blur(3px);z-index:4}.menuOverlay.open{display:block}.content{padding:22px}.grid4{grid-template-columns:repeat(2,1fr)}.layout,.compose{grid-template-columns:1fr}.hero{align-items:start;flex-direction:column}}
+
 @media(max-width:600px){.grid4,.board{grid-template-columns:1fr}.content{padding:17px}.hero h1{font-size:26px}.sys{display:none}.top{height:58px}}
 </style></head>
 <body><div class="app">
+<div class="menuOverlay" id="menuOverlay"></div>
 <aside class="side"><div class="brand"><div class="mark">K</div><div><b>kyro</b><small>personal AI operating system</small></div></div>
 <nav class="nav"><button class="active" data-v="home"><span>⌂</span><span>Command</span></button><button data-v="today"><span>◷</span><span>Today</span></button><button data-v="projects"><span>▦</span><span>Projects</span></button><button data-v="automations"><span>⌁</span><span>Automations</span></button><button data-v="inbox"><span>◌</span><span>Memory</span></button><button data-v="insights"><span>↗</span><span>Insights</span></button></nav><div class="section">Workspace</div><nav class="nav"><button data-v="connections"><span>⌘</span><span>Connections</span></button></nav><div class="sidebottom"><div class="mini"><div class="avatar">GK</div><div><b>Glen Kevin</b><small>Owner · Online</small></div></div></div></aside>
-<main><header class="top"><div class="crumb">Kyro / <b id="crumb">Command</b></div><div class="topactions"><div class="sys"><i></i>Kyro is online</div><button class="btn" id="reset">Reset</button><button class="btn primary" id="new">+ New task</button></div></header>
+<main><header class="top"><button class="mobileMenu" id="mobileMenu" aria-label="Open menu" aria-expanded="false">☰</button><div class="crumb">Kyro / <b id="crumb">Command</b></div><div class="topactions"><div class="sys"><i></i>Kyro is online</div><button class="btn" id="reset">Reset</button><button class="btn primary" id="new">+ New task</button></div></header>
 <section class="content">
 <div class="view active" id="home"><div class="hero"><div><div class="eyebrow" id="dateLabel"></div><h1 id="greeting">Good morning, Glen.</h1><p>One place to think, plan, build, and let Kyro handle the repetitive parts.</p></div></div>
 <div class="command"><div class="commandrow"><div class="spark">✦</div><input id="command" placeholder="Ask Kyro to do something…  e.g. “Plan my work tomorrow”"><span class="shortcut">⌘ K</span></div></div>
@@ -336,6 +339,19 @@ window.addEventListener('keydown',e=>{
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#command')?.focus()}
   if(e.key==='Escape'){$('#modal')?.classList.remove('open');$('#planModal')?.remove()}
 });
+const mobileMenu=$('#mobileMenu'),side=$('.side'),menuOverlay=$('#menuOverlay');
+function setMobileMenu(open){
+  if(!mobileMenu||!side||!menuOverlay)return;
+  side.classList.toggle('mobile-open',open);
+  menuOverlay.classList.toggle('open',open);
+  mobileMenu.setAttribute('aria-expanded',String(open));
+  mobileMenu.setAttribute('aria-label',open?'Close menu':'Open menu');
+  mobileMenu.textContent=open?'×':'☰';
+}
+mobileMenu?.addEventListener('click',()=>setMobileMenu(!side.classList.contains('mobile-open')));
+menuOverlay?.addEventListener('click',()=>setMobileMenu(false));
+$('.nav button').forEach(btn=>btn.addEventListener('click',()=>setMobileMenu(false)));
+
 updateTimeContext();
 render();
 setInterval(updateTimeContext,60000);
