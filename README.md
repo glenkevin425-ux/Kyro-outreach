@@ -1,138 +1,102 @@
-# Kyro
+# Kyro — Personal Command Center
 
-**A personal command center for turning intentions into completed work.**
+Kyro is a **free, local-first personal command center** for one person.
 
-Kyro is no longer an outreach dashboard. This repository is now a deliberately simple, fast workspace for one person who is building things, studying, running a business, and experimenting with automation.
+It is not an AI agent and does not require Anthropic, OpenAI, API keys, or an external inference service.
 
 ## The idea
 
-Most productivity tools give you more places to put work.
+One place to see, organize, and manage the things that matter:
 
-Kyro gives you one place to **decide, execute, and review**.
+- **Dashboard** — your day at a glance
+- **Tasks** — work to do today and later
+- **Projects** — active projects and progress
+- **Finance** — income and simple financial overview
+- **Ideas** — capture ideas before they disappear
+- **Goals** — track bigger objectives
+- **Activity** — see what you have recently done
 
-> **Make the important work obvious. Make the repetitive work automatic.**
+## V1 principles
 
-The new Kyro has six surfaces:
+1. **Free to run**
+2. **Personal by default**
+3. **No external AI dependency**
+4. **Simple and predictable**
+5. **Useful before clever**
+6. **Small changes over fragile rewrites**
 
-- **Command** — the daily operating picture: workload, progress, active projects, automations and recent activity.
-- **Today** — a deliberately small execution queue.
-- **Projects** — outcomes, progress and the next move.
-- **Automations** — background systems and their health.
-- **Inbox** — frictionless capture for ideas before they disappear.
-- **Insights** — execution metrics instead of vanity metrics.
+The first version stores its data locally in the browser using `localStorage`.
 
-## Why this version is different
+## Architecture
 
-The previous product was too dependent on backend bootstrapping and too narrowly defined around outreach.
-
-This build starts with the product experience itself.
-
-The application renders immediately and stores its demo state in browser localStorage. There is no login wall, API dependency, database requirement, cron requirement, or external service required to experience the product.
-
-That makes the demo reliable on static hosting such as Vercel.
-
-## Run it
-
-Open `public/index.html` directly, or serve the repository with any static web server.
-
-For example:
-
-```bash
-python3 -m http.server 8000 --directory public
+```text
+Kyro
+│
+├── Dashboard
+├── Tasks
+├── Projects
+├── Finance
+├── Ideas
+├── Goals
+└── Activity
+        │
+        ↓
+   Local browser state
 ```
 
-Then open `http://localhost:8000`.
-
-## Functional interactions
-
-The current build includes:
-
-- navigation between all six workspaces
-- task creation
-- task completion
-- persistent browser state
-- idea capture
-- resettable demo data
-- responsive desktop/tablet/mobile layouts
-- project and automation views
-- live activity presentation
-- no startup dependency on an API
-
-## Product architecture
-
-The frontend is intentionally self-contained for the first release.
-
-Next layers can be added without redesigning the interface:
-
-1. authenticated workspaces
-2. real database persistence
-3. AI task planning
-4. calendar integration
-5. Gmail/Outlook integration
-6. GitHub project activity
-7. scheduled automations
-8. natural-language commands
-9. multi-agent execution
-10. mobile/PWA support
+There is deliberately no command parser, LLM brain, agent loop, MCP layer, or API requirement in V1.
 
 ## Design direction
 
-Kyro is intentionally:
+**White + vibrant**
 
-- dark
-- quiet
-- premium
-- information-dense without being crowded
-- closer to Linear / Notion / Raycast than a generic SaaS template
-- keyboard-friendly
-- responsive
-- restrained with color
+The interface is intentionally clean, bright, premium, and information-dense without becoming cluttered.
 
-No gradients-for-the-sake-of-gradients. No fake enterprise dashboards. No giant marketing hero inside the product.
+Visual references include Apple, Linear, Notion, Raycast, Stripe, and Vercel, but the UI is original.
 
-## Repository
+## Current branch
 
-```
-Kyro-outreach/
-└── public/
-    └── index.html
-```
+`kyro-personal-command-center`
 
-The old server/API files can remain in the repository as historical scaffolding, but the new application does not depend on them.
+This branch is the new Personal Command Center build. `main` remains untouched.
 
-## Roadmap
+## V1 functionality
 
-### Phase 1 — Core cockpit
-Done.
+- Dashboard with live stats
+- Time-based greeting
+- Task creation
+- Task completion/reopening
+- Task priorities
+- Task due grouping
+- Project creation
+- Project progress
+- Income logging
+- Income totals
+- Idea capture/deletion
+- Goal creation
+- Goal progress
+- Activity history
+- Responsive mobile navigation
+- Local persistence
 
-### Phase 2 — Kyro brain
-- natural language command bar
-- AI prioritization
-- automatic daily planning
-- context-aware project summaries
+## Future possibilities
 
-### Phase 3 — Kyro hands
-- Gmail actions
-- calendar actions
-- GitHub actions
-- web research
-- scheduled jobs
+Only after V1 proves useful:
 
-### Phase 4 — Kyro memory
-- persistent workspace memory
-- project knowledge
-- personal operating preferences
-- searchable activity history
+- calendar/deadline view
+- expenses and budgets
+- recurring tasks
+- study workspace
+- richer project pages
+- data export/import
+- cloud sync
+- authentication
+- optional AI features
 
-### Phase 5 — Kyro autonomy
-- approval-based agents
-- recurring workflows
-- failure recovery
-- execution logs
+AI should remain an **optional layer**, never a requirement for the core product.
 
-Kyro should become the layer between **what you want done** and **the tools that actually do it**.
+## Development rule
 
+Build the boring, reliable version first.
 
-## Stable redeployment
-
-This commit redeploys the verified stable Kyro application build.
+Do not reintroduce an agent architecture merely because it sounds more advanced.
