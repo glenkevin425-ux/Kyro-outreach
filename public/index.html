@@ -1,146 +1,123 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090a0d"><title>Kyro — Personal AI Operating System</title>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#ffffff">
+<title>Kyro — Personal Command Center</title>
 <style>
-:root{--bg:#090a0d;--surface:#0e1015;--surface2:#13161c;--surface3:#191c23;--line:#252a33;--text:#f5f5f2;--muted:#858b97;--dim:#5f6672;--blue:#8da8ff;--violet:#b39cff;--green:#70d6a1;--amber:#e4bd72;--r:18px}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 76% 0%,#171b2a 0,#0b0c10 28%,#090a0d 58%);color:var(--text);font:13px Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:-.01em}button,input,textarea{font:inherit}button{cursor:pointer}
-.app{min-height:100vh}.side{position:fixed;left:0;top:0;bottom:0;width:248px;background:rgba(9,10,13,.84);backdrop-filter:blur(22px);border-right:1px solid var(--line);padding:20px 15px;display:flex;flex-direction:column;z-index:5}.brand{display:flex;align-items:center;gap:10px;padding:3px 10px 30px}.mark{width:31px;height:31px;border-radius:10px;background:#f4f4f1;color:#090a0d;display:grid;place-items:center;font-weight:850}.brand b{font-size:15px}.brand small{display:block;color:var(--dim);font-size:9px;margin-top:2px}.nav{display:grid;gap:3px}.nav button{border:0;background:transparent;color:#858b96;border-radius:10px;padding:9px 11px;text-align:left;display:flex;align-items:center;gap:11px}.nav button:hover,.nav button.active{background:#15181e;color:#f4f4f1}.nav button span:first-child{width:17px;text-align:center;font-size:14px}.section{color:#555c68;text-transform:uppercase;font-size:9px;letter-spacing:.13em;padding:23px 11px 7px}.sidebottom{margin-top:auto}.mini{border-top:1px solid var(--line);padding:15px 8px 2px;display:flex;gap:9px;align-items:center}.avatar{width:29px;height:29px;border-radius:50%;background:#20252e;display:grid;place-items:center;font-size:9px;font-weight:700}.mini b{font-size:11px}.mini small{display:block;color:var(--dim);font-size:9px;margin-top:2px}
-main{margin-left:248px;min-height:100vh}.top{height:66px;border-bottom:1px solid rgba(37,42,51,.8);display:flex;align-items:center;justify-content:space-between;padding:0 35px;background:rgba(9,10,13,.58);backdrop-filter:blur(18px);position:sticky;top:0;z-index:4}.crumb{color:#666d79;font-size:11px}.crumb b{color:#dfe2e6;font-weight:600}.topactions{display:flex;gap:9px;align-items:center}.sys{font-size:10px;color:#7c8490;display:flex;align-items:center;gap:7px;margin-right:6px}.sys i{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green)}.btn{border:1px solid var(--line);background:#11141a;color:#e8e9e7;border-radius:9px;padding:8px 12px}.btn:hover{background:#191c22}.btn.primary{background:#f1f1ee;color:#090a0d;border-color:#f1f1ee;font-weight:650}.content{padding:35px;max-width:1380px}.view{display:none}.view.active{display:block}
-.hero{display:flex;justify-content:space-between;align-items:end;gap:25px;margin-bottom:25px}.eyebrow{text-transform:uppercase;letter-spacing:.16em;color:#626a76;font-size:9px;font-weight:700;margin-bottom:8px}.hero h1{font-size:32px;line-height:1.05;letter-spacing:-1.6px;margin:0 0 9px}.hero p{margin:0;color:var(--muted);max-width:650px;line-height:1.6}.hero .actions{display:flex;gap:8px}
-.command{position:relative;background:linear-gradient(135deg,#151923,#101218);border:1px solid #2a303a;border-radius:20px;padding:18px 20px;margin-bottom:13px;box-shadow:0 22px 80px #0003}.command:before{content:"";position:absolute;inset:0;border-radius:20px;background:linear-gradient(90deg,#8da8ff09,transparent 50%,#b39cff06);pointer-events:none}.commandrow{display:flex;align-items:center;gap:12px}.spark{width:31px;height:31px;border:1px solid #394354;border-radius:10px;display:grid;place-items:center;color:#aebfff;background:#151a25}.command input{flex:1;background:none;border:0;outline:0;color:#f6f6f2;font-size:14px}.command input::placeholder{color:#777f8c}.shortcut{font-size:9px;color:#69717e;border:1px solid #2d333d;border-radius:6px;padding:4px 6px}
-.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}.card{background:rgba(14,16,21,.88);border:1px solid var(--line);border-radius:var(--r);padding:17px}.stat label{font-size:10px;color:#6e7580}.stat strong{display:block;font-size:27px;letter-spacing:-1.1px;margin:8px 0 2px}.stat small{font-size:10px;color:#656c77}.layout{display:grid;grid-template-columns:1.25fr .75fr;gap:11px;margin-top:11px}.cardhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.cardhead h3{font-size:12px;margin:0}.muted{color:var(--muted)}
-.working{min-height:265px;position:relative;overflow:hidden}.working:after{content:"";position:absolute;width:240px;height:240px;right:-90px;top:-90px;background:radial-gradient(circle,#748dff18,transparent 70%);pointer-events:none}.worktop{display:flex;align-items:center;gap:10px}.pulse{width:9px;height:9px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 5px #8da8ff12,0 0 20px #8da8ff}.worktop b{font-size:12px}.worktop span{font-size:10px;color:#6f7783}.worktitle{font-size:20px;letter-spacing:-.6px;margin:25px 0 5px}.workdesc{font-size:11px;color:#7a828e;max-width:540px;line-height:1.55}.steps{display:grid;gap:8px;margin-top:22px}.step{display:flex;align-items:center;gap:9px;font-size:10px;color:#757d88}.step i{width:17px;height:17px;border-radius:50%;border:1px solid #303640;display:grid;place-items:center;font-style:normal;font-size:8px}.step.done{color:#b9c0ca}.step.done i{background:#193025;border-color:#315b47;color:var(--green)}.step.active{color:#e3e5e8}.step.active i{border-color:#647bb4;color:#9eb2ff}.activity{display:grid;gap:15px}.event{display:flex;gap:10px}.ico{width:28px;height:28px;border:1px solid var(--line);border-radius:9px;display:grid;place-items:center;color:#9da5b1;font-size:10px;flex:none}.event b{font-size:10px}.event p{margin:3px 0 0;color:#6f7783;font-size:10px;line-height:1.45}.time{margin-left:auto;color:#555d69;font-size:9px}
-.board{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}.col{background:#0c0e12;border:1px solid var(--line);border-radius:16px;padding:13px;min-height:350px}.colhead{display:flex;justify-content:space-between;color:#747c87;font-size:10px;margin-bottom:10px}.task{background:#12151b;border:1px solid #20252e;border-radius:12px;padding:12px;margin-bottom:8px;transition:.2s}.task:hover{border-color:#394150;transform:translateY(-1px)}.task b{font-size:11px}.task p{font-size:9px;color:#69717c;line-height:1.45;margin:7px 0}.taskfoot{display:flex;justify-content:space-between;align-items:center}.pill{padding:4px 7px;border-radius:20px;background:#191d24;color:#858d99;font-size:9px}.pill.green{background:#10251b;color:#6fd6a1}.pill.blue{background:#121c30;color:#91aaff}.table{width:100%;border-collapse:collapse}.table th{text-align:left;padding:10px;color:#5e6672;font-size:9px;text-transform:uppercase;letter-spacing:.09em;border-bottom:1px solid var(--line)}.table td{padding:14px 10px;border-bottom:1px solid #191c22;color:#b9bec7;font-size:10px}.table tr:last-child td{border-bottom:0}.name{color:#f0f1ef!important;font-weight:600}
-.compose{display:grid;grid-template-columns:.7fr 1.3fr;gap:11px}.field{display:grid;gap:6px;margin-bottom:13px}.field label{font-size:9px;text-transform:uppercase;letter-spacing:.09em;color:#68707c}.field input,.field textarea{border:1px solid var(--line);background:#0b0d11;color:#f3f4f1;border-radius:10px;padding:10px;outline:0}.field textarea{min-height:190px;resize:vertical}.idea{padding:11px;border:1px solid var(--line);background:#101218;border-radius:11px;margin-bottom:8px}.idea b{font-size:10px}.idea p{font-size:9px;color:#69717c;margin:4px 0 0}
-.modal{display:none;position:fixed;inset:0;background:#0009;place-items:center;z-index:20}.modal.open{display:grid}.modalbox{width:min(560px,calc(100% - 30px));background:#11141a;border:1px solid #2d333d;border-radius:18px;padding:20px;box-shadow:0 30px 100px #000c}.modalbox h2{margin:0 0 5px;font-size:18px}.modalbox p{margin:0 0 18px;color:#717985;font-size:10px}.modalactions{display:flex;justify-content:flex-end;gap:8px}.toast{display:none;position:fixed;right:25px;bottom:25px;background:#f2f2ef;color:#090a0d;padding:10px 13px;border-radius:10px;font-weight:650;font-size:11px;z-index:30;box-shadow:0 20px 60px #000b}
-@media(max-width:900px){.side{width:68px}.brand div:not(.mark),.nav button span:not(:first-child),.mini div:not(.avatar),.section{display:none}.brand{padding-left:10px}.nav button{justify-content:center}.top,main{margin-left:68px}.content{padding:22px}.grid4{grid-template-columns:repeat(2,1fr)}.layout,.compose{grid-template-columns:1fr}.hero{align-items:start;flex-direction:column}.top{padding:0 18px}}
-@media(max-width:600px){.grid4,.board{grid-template-columns:1fr}.content{padding:17px}.hero h1{font-size:26px}.sys{display:none}.top{height:58px}}
-</style></head>
-<body><div class="app">
-<aside class="side"><div class="brand"><div class="mark">K</div><div><b>kyro</b><small>personal AI operating system</small></div></div>
-<nav class="nav"><button class="active" data-v="home"><span>⌂</span><span>Command</span></button><button data-v="today"><span>◷</span><span>Today</span></button><button data-v="projects"><span>▦</span><span>Projects</span></button><button data-v="automations"><span>⌁</span><span>Automations</span></button><button data-v="inbox"><span>◌</span><span>Memory</span></button><button data-v="insights"><span>↗</span><span>Insights</span></button></nav><div class="section">Workspace</div><nav class="nav"><button data-v="connections"><span>⌘</span><span>Connections</span></button></nav><div class="sidebottom"><div class="mini"><div class="avatar">GK</div><div><b>Glen Kevin</b><small>Owner · Online</small></div></div></div></aside>
-<main><header class="top"><div class="crumb">Kyro / <b id="crumb">Command</b></div><div class="topactions"><div class="sys"><i></i>Kyro is online</div><button class="btn" id="reset">Reset</button><button class="btn primary" id="new">+ New task</button></div></header>
-<section class="content">
-<div class="view active" id="home"><div class="hero"><div><div class="eyebrow" id="dateLabel"></div><h1 id="greeting">Good morning, Glen.</h1><p>One place to think, plan, build, and let Kyro handle the repetitive parts.</p></div></div>
-<div class="command"><div class="commandrow"><div class="spark">✦</div><input id="command" placeholder="Ask Kyro to do something…  e.g. “Plan my work tomorrow”"><span class="shortcut">⌘ K</span></div></div>
-<div class="grid4"><div class="card stat"><label>Today</label><strong id="done">4</strong><small>tasks completed</small></div><div class="card stat"><label>Focus</label><strong>82%</strong><small>+9% this week</small></div><div class="card stat"><label>Active work</label><strong>3</strong><small>projects moving</small></div><div class="card stat"><label>Time saved</label><strong>3.8h</strong><small>by automations</small></div></div>
-<div class="layout"><div class="card working"><div class="worktop"><i class="pulse"></i><b>Kyro is working</b><span>Live execution</span></div><div class="worktitle">Build the next version of Kyro</div><div class="workdesc">Turning your idea into an operating system: command layer, project context, automation hooks, and a cleaner visual language.</div><div class="steps"><div class="step done"><i>✓</i>Define the new product direction</div><div class="step done"><i>✓</i>Rebuild the interface foundation</div><div class="step active"><i>→</i>Design the Kyro command layer</div><div class="step"><i>4</i>Connect real tools</div></div></div>
-<div class="card"><div class="cardhead"><h3>Activity</h3><span class="muted">Live</span></div><div class="activity"><div class="event"><div class="ico">✓</div><div><b>Daily plan completed</b><p>9 tasks prioritized around your focus.</p></div><span class="time">now</span></div><div class="event"><div class="ico">✦</div><div><b>Design research added</b><p>Pinterest + Refero references applied.</p></div><span class="time">4m</span></div><div class="event"><div class="ico">↗</div><div><b>Kyro v4 started</b><p>New operating-system direction.</p></div><span class="time">18m</span></div></div></div></div></div>
-<div class="view" id="today"><div class="hero"><div><div class="eyebrow">Execution</div><h1>Today's work.</h1><p>Keep the queue small. Make the next action obvious.</p></div><button class="btn primary" id="add">+ Add task</button></div><div class="board" id="board"></div></div>
-<div class="view" id="projects"><div class="hero"><div><div class="eyebrow">Context</div><h1>What you're building.</h1><p>Projects give Kyro the context it needs to help, not just a place to store tasks.</p></div><button class="btn primary" onclick="toast('Project creation coming next')">+ New project</button></div><div class="card"><table class="table"><thead><tr><th>Project</th><th>Status</th><th>Progress</th><th>Next action</th></tr></thead><tbody><tr><td class="name">Kyro</td><td><span class="pill blue">Building</span></td><td>74%</td><td>Connect the command layer</td></tr><tr><td class="name">Kcreatives</td><td><span class="pill green">Active</span></td><td>61%</td><td>Close the next client</td></tr><tr><td class="name">MMUST HostelHub</td><td><span class="pill">Paused</span></td><td>38%</td><td>Revisit product scope</td></tr></tbody></table></div></div>
-<div class="view" id="automations"><div class="hero"><div><div class="eyebrow">Kyro hands</div><h1>Things that happen for you.</h1><p>Automations should feel visible, controlled, and useful—not like mysterious background jobs.</p></div><button class="btn primary" onclick="toast('Automation builder coming next')">+ New automation</button></div><div class="grid4"><div class="card stat"><label>Running</label><strong>4</strong><small>healthy</small></div><div class="card stat"><label>Runs today</label><strong>27</strong><small>across your workspace</small></div><div class="card stat"><label>Time saved</label><strong>3.8h</strong><small>estimated</small></div><div class="card stat"><label>Failures</label><strong>0</strong><small>last 24 hours</small></div></div><div class="card" style="margin-top:11px"><table class="table"><thead><tr><th>Automation</th><th>Trigger</th><th>Last run</th><th>Status</th></tr></thead><tbody><tr><td class="name">Daily planning</td><td>Every morning</td><td>07:00</td><td><span class="pill green">Running</span></td></tr><tr><td class="name">Kcreatives follow-up</td><td>Weekdays</td><td>09:00</td><td><span class="pill green">Running</span></td></tr><tr><td class="name">Project digest</td><td>Friday</td><td>09:30</td><td><span class="pill green">Running</span></td></tr></tbody></table></div></div>
-<div class="view" id="inbox"><div class="hero"><div><div class="eyebrow">Memory</div><h1>Give Kyro context.</h1><p>Capture ideas, decisions, and things you want the system to remember.</p></div></div><div class="compose"><div class="card"><div class="cardhead"><h3>Capture something</h3><span class="muted">Memory</span></div><div class="field"><label>Thought</label><textarea id="idea" placeholder="A decision, idea, preference, or anything worth remembering…"></textarea></div><button class="btn primary" id="save">Save to memory</button></div><div class="card"><div class="cardhead"><h3>Recent memory</h3><span class="muted" id="count">3 items</span></div><div id="ideas"></div></div></div></div>
-<div class="view" id="insights"><div class="hero"><div><div class="eyebrow">System health</div><h1>Is Kyro making you better?</h1><p>Measure execution and consistency—not activity for activity's sake.</p></div></div><div class="grid4"><div class="card stat"><label>Completion</label><strong>86%</strong><small>last 30 days</small></div><div class="card stat"><label>Deep work</label><strong>21.4h</strong><small>this week</small></div><div class="card stat"><label>Shipped</label><strong>7</strong><small>this quarter</small></div><div class="card stat"><label>Consistency</label><strong>91%</strong><small>best month</small></div></div></div>
-<div class="view" id="connections"><div class="hero"><div><div class="eyebrow">Kyro hands</div><h1>Your tools, connected.</h1><p>Kyro becomes powerful when it can act across the software you already use.</p></div></div><div class="grid4"><div class="card"><b>GitHub</b><p class="muted">Projects, issues, commits</p><span class="pill green">Ready</span></div><div class="card"><b>Gmail</b><p class="muted">Email and follow-ups</p><span class="pill">Connect</span></div><div class="card"><b>Calendar</b><p class="muted">Time and planning</p><span class="pill">Connect</span></div><div class="card"><b>Replit</b><p class="muted">Build and deploy</p><span class="pill">Connect</span></div></div></div>
-</section></main></div>
-<div class="modal" id="modal"><div class="modalbox"><h2>New task</h2><p>Give Kyro something concrete to move forward.</p><div class="field"><label>Task</label><input id="task" placeholder="What needs to happen?"></div><div class="modalactions"><button class="btn" id="cancel">Cancel</button><button class="btn primary" id="create">Create task</button></div></div></div><div class="toast" id="toast"></div>
+:root{--bg:#f6f8fc;--card:#fff;--text:#111827;--muted:#667085;--line:#e7ebf2;--blue:#315cff;--blue2:#5b7cff;--soft:#eef3ff;--green:#16a36a;--amber:#f59e0b;--red:#ef4444;--shadow:0 12px 35px rgba(28,48,95,.07);--r:18px}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font:14px Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,textarea,select{font:inherit}
+button{cursor:pointer;border:0}.app{display:flex;min-height:100vh}.sidebar{width:238px;background:#fff;border-right:1px solid var(--line);padding:22px 14px;position:fixed;inset:0 auto 0 0;z-index:20}.brand{display:flex;align-items:center;gap:11px;padding:3px 10px 28px;font-weight:800;font-size:19px;letter-spacing:-.04em}.logo{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,#315cff,#7b61ff);display:grid;place-items:center;color:white;font-weight:900;box-shadow:0 8px 20px #315cff2b}.nav{display:grid;gap:5px}.nav button{display:flex;align-items:center;gap:12px;width:100%;padding:11px 12px;border-radius:11px;background:transparent;color:#667085;text-align:left}.nav button:hover{background:#f6f8fc;color:var(--text)}.nav button.active{background:var(--soft);color:var(--blue);font-weight:700}.icon{width:20px;text-align:center;font-size:16px}.section-label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#98a2b3;padding:20px 12px 7px}.side-footer{position:absolute;left:14px;right:14px;bottom:18px}.profile{display:flex;align-items:center;gap:10px;padding:11px;border:1px solid var(--line);border-radius:14px;background:#fafbfe}.avatar{width:32px;height:32px;border-radius:50%;background:#e9efff;color:var(--blue);display:grid;place-items:center;font-weight:800}.main{margin-left:238px;width:calc(100% - 238px);padding:0 34px 40px}.top{height:72px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);margin-bottom:28px}.top h1{font-size:15px;margin:0}.date{color:var(--muted);font-size:13px}.menu{display:none;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px}.view{display:none}.view.active{display:block}.hero{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px}.eyebrow{color:var(--blue);font-weight:700;font-size:12px;margin-bottom:6px}.hero h2{font-size:31px;letter-spacing:-.05em;margin:0 0 5px}.hero p{margin:0;color:var(--muted)}.primary{background:var(--blue);color:#fff;border-radius:11px;padding:11px 15px;font-weight:700;box-shadow:0 8px 20px #315cff25}.primary:hover{background:#244be0}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}.stat,.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}.stat{padding:17px}.stat-top{display:flex;justify-content:space-between;color:var(--muted);font-size:12px}.stat-value{font-size:25px;font-weight:800;letter-spacing:-.04em;margin:10px 0 3px}.stat-note{font-size:11px;color:var(--muted)}.layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.9fr);gap:18px}.card{padding:18px}.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.card-head h3{font-size:14px;margin:0}.link{background:none;color:var(--blue);font-size:12px;font-weight:700}.task{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #eef1f5}.task:last-child{border-bottom:0}.check{width:20px;height:20px;border:1.5px solid #c8d0dc;border-radius:6px;background:#fff;flex:none}.check.done{background:var(--green);border-color:var(--green);color:#fff}.task-main{min-width:0;flex:1}.task-title{font-weight:650}.task.done .task-title{text-decoration:line-through;color:#98a2b3}.task-meta{font-size:11px;color:var(--muted);margin-top:3px}.pill{font-size:10px;padding:5px 8px;border-radius:999px;background:#f1f4f8;color:#667085}.pill.blue{background:var(--soft);color:var(--blue)}.pill.green{background:#eaf9f2;color:#138a5b}.pill.amber{background:#fff6df;color:#a66b00}.project{padding:13px 0;border-bottom:1px solid #eef1f5}.project:last-child{border:0}.project-row{display:flex;justify-content:space-between;gap:10px}.project-name{font-weight:700}.progress{height:7px;background:#edf0f5;border-radius:99px;overflow:hidden;margin-top:10px}.bar{height:100%;background:linear-gradient(90deg,var(--blue),#7c6cff);border-radius:99px}.activity{display:grid;gap:14px}.activity-item{display:flex;gap:10px}.dot{width:8px;height:8px;border-radius:50%;background:var(--blue);margin-top:5px}.activity-item div:last-child{flex:1}.activity-time{font-size:11px;color:var(--muted);margin-top:2px}.page-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}.page-head h2{margin:0;font-size:27px;letter-spacing:-.04em}.toolbar{display:flex;gap:9px}.secondary{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 13px;color:#475467}.list{display:grid;gap:10px}.row{background:#fff;border:1px solid var(--line);border-radius:15px;padding:15px;display:flex;align-items:center;gap:13px}.row-main{flex:1}.row-title{font-weight:700}.row-sub{font-size:11px;color:var(--muted);margin-top:4px}.empty{text-align:center;padding:50px 20px;color:var(--muted)}.empty strong{display:block;color:var(--text);margin-bottom:5px}.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.finance-number{font-size:26px;font-weight:800;margin-top:9px}.positive{color:var(--green)}.negative{color:var(--red)}.idea{min-height:135px}.idea p{color:#667085;line-height:1.55;margin:10px 0}.goal{display:flex;gap:13px;align-items:center}.goal-circle{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--blue);font-weight:800}.modal-backdrop{position:fixed;inset:0;background:#0b122455;backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}.modal-backdrop.open{display:flex}.modal{width:min(480px,100%);background:#fff;border-radius:20px;padding:22px;box-shadow:0 30px 80px #17254b25}.modal h3{margin:0 0 17px;font-size:19px}.field{display:grid;gap:6px;margin-bottom:13px}.field label{font-size:12px;font-weight:700;color:#475467}.field input,.field textarea,.field select{width:100%;border:1px solid #dfe4ec;border-radius:10px;padding:11px 12px;outline:none;background:#fff}.field input:focus,.field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px #315cff12}.modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px}.mobile-overlay{display:none}.toast{position:fixed;right:20px;bottom:20px;background:#111827;color:#fff;padding:12px 15px;border-radius:12px;box-shadow:0 12px 30px #0002;transform:translateY(20px);opacity:0;pointer-events:none;transition:.2s;z-index:70}.toast.show{transform:none;opacity:1}
+@media(max-width:1050px){.grid4{grid-template-columns:repeat(2,1fr)}.layout{grid-template-columns:1fr}.cards3{grid-template-columns:1fr 1fr}}
+@media(max-width:760px){.sidebar{transform:translateX(-105%);transition:.22s;box-shadow:18px 0 45px #18264a18}.sidebar.open{transform:none}.mobile-overlay.open{display:block;position:fixed;inset:0;background:#17213b35;z-index:15}.main{margin-left:0;width:100%;padding:0 17px 30px}.top{height:64px;margin-bottom:22px}.menu{display:block}.top-left{display:flex;align-items:center;gap:10px}.hero{align-items:flex-start;gap:14px}.hero h2{font-size:25px}.hero .primary{white-space:nowrap}.grid4{grid-template-columns:1fr 1fr}.cards3{grid-template-columns:1fr}.layout{grid-template-columns:1fr}}
+@media(max-width:480px){.grid4{grid-template-columns:1fr}.hero{display:block}.hero .primary{margin-top:15px}.top .date{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="sidebar">
+  <div class="brand"><div class="logo">K</div><span>Kyro</span></div>
+  <nav class="nav" id="nav">
+    <button class="active" data-view="dashboard"><span class="icon">⌂</span>Dashboard</button>
+    <button data-view="tasks"><span class="icon">✓</span>Tasks</button>
+    <button data-view="projects"><span class="icon">▣</span>Projects</button>
+    <button data-view="finance"><span class="icon">◈</span>Finance</button>
+    <button data-view="ideas"><span class="icon">✦</span>Ideas</button>
+    <button data-view="goals"><span class="icon">◎</span>Goals</button>
+  </nav>
+  <div class="section-label">Workspace</div>
+  <nav class="nav">
+    <button data-view="activity"><span class="icon">◷</span>Activity</button>
+  </nav>
+  <div class="side-footer"><div class="profile"><div class="avatar">G</div><div><strong>Glen</strong><div style="font-size:11px;color:#98a2b3">Personal workspace</div></div></div></div>
+</aside>
+<div class="mobile-overlay" id="overlay"></div>
+<main class="main">
+<header class="top"><div class="top-left"><button class="menu" id="menu">☰</button><h1>Personal Command Center</h1></div><div class="date" id="date"></div></header>
+
+<section class="view active" id="dashboard">
+  <div class="hero"><div><div class="eyebrow">YOUR DAY</div><h2 id="greeting">Good afternoon, Glen.</h2><p>Make the important work obvious.</p></div><button class="primary" onclick="openTask()">+ Add task</button></div>
+  <div class="grid4">
+    <div class="stat"><div class="stat-top"><span>Today's tasks</span><span>✓</span></div><div class="stat-value" id="statTasks">0</div><div class="stat-note">remaining today</div></div>
+    <div class="stat"><div class="stat-top"><span>Active projects</span><span>▣</span></div><div class="stat-value" id="statProjects">0</div><div class="stat-note">currently in motion</div></div>
+    <div class="stat"><div class="stat-top"><span>Monthly income</span><span>◈</span></div><div class="stat-value" id="statIncome">KSh 0</div><div class="stat-note">logged this month</div></div>
+    <div class="stat"><div class="stat-top"><span>Goals</span><span>◎</span></div><div class="stat-value" id="statGoals">0</div><div class="stat-note">active goals</div></div>
+  </div>
+  <div class="layout">
+    <div class="card"><div class="card-head"><h3>Today's focus</h3><button class="link" onclick="showView('tasks')">View all</button></div><div id="dashTasks"></div></div>
+    <div class="card"><div class="card-head"><h3>Active projects</h3><button class="link" onclick="showView('projects')">Manage</button></div><div id="dashProjects"></div></div>
+    <div class="card"><div class="card-head"><h3>Upcoming</h3></div><div id="upcoming"></div></div>
+    <div class="card"><div class="card-head"><h3>Recent activity</h3><button class="link" onclick="showView('activity')">See all</button></div><div class="activity" id="dashActivity"></div></div>
+  </div>
+</section>
+
+<section class="view" id="tasks"><div class="page-head"><h2>Tasks</h2><div class="toolbar"><button class="primary" onclick="openTask()">+ Add task</button></div></div><div class="list" id="taskList"></div></section>
+<section class="view" id="projects"><div class="page-head"><h2>Projects</h2><button class="primary" onclick="openProject()">+ Add project</button></div><div class="cards3" id="projectList"></div></section>
+<section class="view" id="finance"><div class="page-head"><h2>Finance</h2><button class="primary" onclick="openFinance()">+ Log income</button></div><div class="grid4" id="financeStats"></div><div class="card"><div class="card-head"><h3>Recent income</h3></div><div class="list" id="incomeList"></div></div></section>
+<section class="view" id="ideas"><div class="page-head"><h2>Ideas</h2><button class="primary" onclick="openIdea()">+ Capture idea</button></div><div class="cards3" id="ideaList"></div></section>
+<section class="view" id="goals"><div class="page-head"><h2>Goals</h2><button class="primary" onclick="openGoal()">+ Add goal</button></div><div class="list" id="goalList"></div></section>
+<section class="view" id="activity"><div class="page-head"><h2>Activity</h2></div><div class="card"><div class="activity" id="activityList"></div></div></section>
+</main></div>
+
+<div class="modal-backdrop" id="modal"><div class="modal" id="modalBody"></div></div><div class="toast" id="toast"></div>
+
 <script>
-const key='kyro-v5';
-let d=JSON.parse(localStorage.getItem(key)||'null')||{
-  done:4,
-  ideas:["Build Kyro into a real AI operating system","Make Kcreatives acquisition more systematic","Connect GitHub and Replit to Kyro"],
-  tasks:[["Design Kyro command layer","Today"],["Review Kcreatives pipeline","Today"],["Write next product spec","Today"],["Study civil engineering","Today"],["Research AI agents","Later"],["Plan tomorrow","Later"]],
-  plans:[], connections:{GitHub:true,Gmail:false,Calendar:false,Replit:false}
-};
-const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-function save(){localStorage.setItem(key,JSON.stringify(d))}
-function toast(t){let x=$('#toast');x.textContent=t;x.style.display='block';clearTimeout(window.toastT);window.toastT=setTimeout(()=>x.style.display='none',2400)}
+const KEY='kyro-command-center-v1';
+const seed={tasks:[{id:1,title:'Review structural analysis',due:'Today',priority:'High',done:false},{id:2,title:'Work on Kcreatives',due:'Today',priority:'Medium',done:false},{id:3,title:'Study for 2 hours',due:'Today',priority:'Medium',done:false},{id:4,title:'Review project roadmap',due:'Tomorrow',priority:'Low',done:false}],projects:[{id:1,name:'Kcreatives',desc:'Design, branding and client work',progress:80},{id:2,name:'Fixly',desc:'Product development',progress:60},{id:3,name:'MMUST HostelHub',desc:'Frontend project',progress:40}],income:[{id:1,amount:48000,source:'Monthly salary',date:'October 2026'}],ideas:[{id:1,title:'Student command center',body:'A focused workspace for university students to manage courses, assignments and deadlines.'},{id:2,title:'Kcreatives client portal',body:'A simple place where clients can see project status, deliverables and invoices.'}],goals:[{id:1,title:'Build Kcreatives into a consistent side business',progress:35},{id:2,title:'Maintain a strong university performance',progress:55}],activity:[{text:'Kyro workspace created',time:'Just now'},{text:'Personal Command Center selected as the new direction',time:'Today'}]};
+let state=JSON.parse(localStorage.getItem(KEY)||'null')||seed;
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function money(n){return 'KSh '+Number(n||0).toLocaleString('en-KE')}
+function today(){return new Date().toLocaleDateString('en-CA')}
+function greeting(){let h=new Date().getHours();return (h<12?'Good morning':h<17?'Good afternoon':'Good evening')+', Glen.'}
+document.getElementById('greeting').textContent=greeting();
+document.getElementById('date').textContent=new Date().toLocaleDateString('en-KE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+function showView(id){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('open');render()}
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>showView(b.dataset.view));
+document.getElementById('menu').onclick=()=>{document.getElementById('sidebar').classList.add('open');document.getElementById('overlay').classList.add('open')};
+document.getElementById('overlay').onclick=()=>{document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('open')};
+function log(text){state.activity.unshift({text,time:'Just now'});state.activity=state.activity.slice(0,20);save()}
 function render(){
-  $('#done').textContent=d.done;
-  let gs={Today:[],Later:[]};
-  d.tasks.forEach((x,i)=>gs[x[1]].push([x[0],i]));
-  $('#board').innerHTML=Object.entries(gs).map(([g,items])=>'<div class="col"><div class="colhead"><b>'+g+'</b><span>'+items.length+'</span></div>'+items.map(([t,i])=>'<div class="task"><b>'+esc(t)+'</b><p>'+(g==='Today'?'Priority action · keep moving':'Backlog · review when useful')+'</p><div class="taskfoot"><span class="pill">'+(g==='Today'?'Focus':'Later')+'</span><button class="btn" style="padding:4px 7px;font-size:9px" data-complete="'+i+'">Done</button></div></div>').join('')+'</div>').join('');
-  $('#ideas').innerHTML=d.ideas.map((x,i)=>'<div class="idea"><b>'+esc(x)+'</b><p>Remembered by Kyro · '+(i+1)+' item'+(i?'s':'')+' ago</p></div>').join('');
-  $('#count').textContent=d.ideas.length+' items';
-  $$('#connections .card').forEach(card=>{
-    const name=card.querySelector('b')?.textContent?.trim();
-    if(!name||name==='GitHub'&&d.connections.GitHub===undefined)return;
-    const status=d.connections[name];
-    const pill=card.querySelector('.pill');
-    if(pill&&typeof status==='boolean'){pill.textContent=status?'Connected':'Connect';pill.className='pill '+(status?'green':'')}
-  });
+ document.getElementById('statTasks').textContent=state.tasks.filter(t=>!t.done&&t.due==='Today').length;
+ document.getElementById('statProjects').textContent=state.projects.length;
+ document.getElementById('statIncome').textContent=money(state.income.reduce((a,x)=>a+Number(x.amount||0),0));
+ document.getElementById('statGoals').textContent=state.goals.length;
+ document.getElementById('dashTasks').innerHTML=state.tasks.filter(t=>t.due==='Today').slice(0,5).map(taskHTML).join('')||'<div class="empty"><strong>No tasks today</strong>Your day is clear.</div>';
+ document.getElementById('taskList').innerHTML=state.tasks.map(taskHTML).join('')||'<div class="card empty"><strong>No tasks yet</strong>Add your first task.</div>';
+ document.getElementById('dashProjects').innerHTML=state.projects.slice(0,4).map(projectHTML).join('')||'<div class="empty"><strong>No projects</strong>Add a project to get started.</div>';
+ document.getElementById('projectList').innerHTML=state.projects.map(projectCard).join('')||'<div class="card empty"><strong>No projects yet</strong>Create one when you're ready.</div>';
+ document.getElementById('upcoming').innerHTML=state.tasks.filter(t=>t.due!=='Today'&&!t.done).slice(0,4).map(t=>'<div class="task"><div class="task-main"><div class="task-title">'+esc(t.title)+'</div><div class="task-meta">'+esc(t.due)+'</div></div><span class="pill">'+esc(t.priority||'Normal')+'</span></div>').join('')||'<div class="empty">Nothing upcoming.</div>';
+ document.getElementById('dashActivity').innerHTML=state.activity.slice(0,5).map(activityHTML).join('');
+ document.getElementById('activityList').innerHTML=state.activity.map(activityHTML).join('')||'<div class="empty">No activity yet.</div>';
+ document.getElementById('financeStats').innerHTML='<div class="stat"><div class="stat-top">Income</div><div class="finance-number positive">'+money(state.income.reduce((a,x)=>a+Number(x.amount||0),0))+'</div><div class="stat-note">logged</div></div><div class="stat"><div class="stat-top">Entries</div><div class="finance-number">'+state.income.length+'</div><div class="stat-note">income records</div></div><div class="stat"><div class="stat-top">Average</div><div class="finance-number">'+money(state.income.length?state.income.reduce((a,x)=>a+Number(x.amount||0),0)/state.income.length:0)+'</div><div class="stat-note">per entry</div></div><div class="stat"><div class="stat-top">Currency</div><div class="finance-number">KES</div><div class="stat-note">Kenyan shilling</div></div>';
+ document.getElementById('incomeList').innerHTML=state.income.map(x=>'<div class="row"><div class="row-main"><div class="row-title">'+money(x.amount)+'</div><div class="row-sub">'+esc(x.source)+' · '+esc(x.date)+'</div></div></div>').join('')||'<div class="empty">No income logged.</div>';
+ document.getElementById('ideaList').innerHTML=state.ideas.map(x=>'<div class="card idea"><span class="pill blue">Idea</span><h3>'+esc(x.title)+'</h3><p>'+esc(x.body)+'</p><button class="link" onclick="deleteIdea('+x.id+')">Delete</button></div>').join('')||'<div class="card empty"><strong>No ideas yet</strong>Capture something worth remembering.</div>';
+ document.getElementById('goalList').innerHTML=state.goals.map(x=>'<div class="row goal"><div class="goal-circle">'+x.progress+'%</div><div class="row-main"><div class="row-title">'+esc(x.title)+'</div><div class="progress"><div class="bar" style="width:'+Math.min(100,Math.max(0,x.progress))+'%"></div></div></div><button class="secondary" onclick="advanceGoal('+x.id+')">+10%</button></div>').join('')||'<div class="card empty"><strong>No goals yet</strong>Define something worth moving toward.</div>';
 }
-function updateTimeContext(){
-  const now=new Date();
-  const hour=now.getHours();
-  const greeting=hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
-  $('#greeting').textContent=greeting+', Glen.';
-  $('#dateLabel').textContent=new Intl.DateTimeFormat('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(now);
-}
-function esc(v){return String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function complete(i){d.tasks.splice(i,1);d.done++;save();toast('Task completed');render()}
-function go(v){$$('.view').forEach(x=>x.classList.toggle('active',x.id===v));$$('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.v===v));$('#crumb').textContent={home:'Command',today:'Today',projects:'Projects',automations:'Automations',inbox:'Memory',insights:'Insights',connections:'Connections'}[v];render()}
-$$('.nav button').forEach(x=>x.addEventListener('click',()=>go(x.dataset.v)));
-function openTask(){ $('#modal').classList.add('open');$('#task').focus() }
-$('#new').onclick=openTask;$('#add').onclick=openTask;$('#cancel').onclick=()=>$('#modal').classList.remove('open');
-$('#create').onclick=()=>{
-  const v=$('#task').value.trim();
-  if(!v){toast('Enter a task first');return}
-  d.tasks.unshift([v,'Today']);save();$('#task').value='';$('#modal').classList.remove('open');toast('Added to today');go('today')
-};
-$('#save').onclick=()=>{
-  const v=$('#idea').value.trim();
-  if(!v){toast('Write something to remember');return}
-  d.ideas.unshift(v);save();$('#idea').value='';toast('Saved to memory');render()
-};
-$('#reset').onclick=()=>{localStorage.removeItem(key);location.reload()};
-document.addEventListener('click',e=>{
-  const done=e.target.closest('[data-complete]');
-  if(done){complete(Number(done.dataset.complete));return}
-  const card=e.target.closest('#connections .card');
-  if(card){
-    const name=card.querySelector('b')?.textContent?.trim();
-    if(name&&name in d.connections){
-      d.connections[name]=!d.connections[name];save();render();toast(name+(d.connections[name]?' connected':' disconnected'));
-    }
-  }
-});
-function planFor(q){
-  const s=q.toLowerCase();
-  if(s.includes('kcreatives')||s.includes('client')||s.includes('outreach'))return {
-    title:'Kcreatives client acquisition plan',
-    summary:'A focused workflow to identify prospects, prepare outreach, and track follow-ups.',
-    steps:['Define the ideal client profile','Research 10 relevant businesses','Prepare personalized outreach','Create a follow-up queue','Review results and improve the message']
-  };
-  if(s.includes('day')||s.includes('tomorrow'))return {
-    title:'Plan my day',
-    summary:'Turn your priorities into a small, executable schedule.',
-    steps:['Review active projects','Choose the 3 highest-impact tasks','Block focused work','Handle small admin tasks','Review progress before finishing']
-  };
-  if(s.includes('github')||s.includes('project'))return {
-    title:'Review my projects',
-    summary:'Inspect active work and identify the next concrete actions.',
-    steps:['Review active projects','Identify blockers','Choose the next action for each','Prioritize what ships first','Create the execution queue']
-  };
-  return {
-    title:q.charAt(0).toUpperCase()+q.slice(1),
-    summary:'Kyro turned your request into an executable plan. Review it before starting.',
-    steps:['Clarify the desired outcome','Break the outcome into actions','Choose the right tools','Execute the safe steps','Review the result']
-  };
-}
-function showPlan(q){
-  const p=planFor(q);
-  let old=$('#planModal');if(old)old.remove();
-  const box=document.createElement('div');box.className='modal open';box.id='planModal';
-  box.innerHTML='<div class="modalbox"><div class="eyebrow">Kyro plan</div><h2>'+esc(p.title)+'</h2><p>'+esc(p.summary)+'</p><div class="steps" style="margin:0 0 18px">'+p.steps.map((x,i)=>'<div class="step '+(i===0?'active':'')+'"><i>'+(i+1)+'</i>'+esc(x)+'</div>').join('')+'</div><div class="modalactions"><button class="btn" id="planCancel">Cancel</button><button class="btn primary" id="planStart">Start plan</button></div></div>';
-  document.body.appendChild(box);
-  $('#planCancel').onclick=()=>box.remove();
-  $('#planStart').onclick=()=>{
-    d.plans.unshift({title:p.title,status:'running',steps:p.steps,created:Date.now()});
-    p.steps.slice(0,2).forEach(x=>d.tasks.unshift([x,'Today']));
-    save();box.remove();toast('Plan started · 2 actions added');go('today')
-  };
-}
-$('#command').addEventListener('keydown',e=>{
-  if(e.key==='Enter'){
-    const q=e.target.value.trim();if(!q){toast('Tell Kyro what you want done');return}
-    e.target.value='';showPlan(q)
-  }
-});
-window.addEventListener('keydown',e=>{
-  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#command')?.focus()}
-  if(e.key==='Escape'){$('#modal')?.classList.remove('open');$('#planModal')?.remove()}
-});
-updateTimeContext();
+function taskHTML(t){return '<div class="task '+(t.done?'done':'')+'"><button class="check '+(t.done?'done':'')+'" onclick="toggleTask('+t.id+')">'+(t.done?'✓':'')+'</button><div class="task-main"><div class="task-title">'+esc(t.title)+'</div><div class="task-meta">'+esc(t.due)+' · '+esc(t.priority||'Normal')+'</div></div><span class="pill '+(t.priority==='High'?'amber':'')+'">'+(t.done?'Done':esc(t.priority||'Normal'))+'</span></div>'}
+function projectHTML(p){return '<div class="project"><div class="project-row"><span class="project-name">'+esc(p.name)+'</span><span class="pill">'+p.progress+'%</span></div><div class="progress"><div class="bar" style="width:'+p.progress+'%"></div></div></div>'}
+function projectCard(p){return '<div class="card"><span class="pill blue">Project</span><h3>'+esc(p.name)+'</h3><p style="color:#667085;line-height:1.5">'+esc(p.desc)+'</p><div class="project-row"><span style="font-size:12px;color:#667085">Progress</span><strong>'+p.progress+'%</strong></div><div class="progress"><div class="bar" style="width:'+p.progress+'%"></div></div><div style="margin-top:14px"><button class="secondary" onclick="advanceProject('+p.id+')">Advance</button></div></div>'}
+function activityHTML(a){return '<div class="activity-item"><span class="dot"></span><div><div>'+esc(a.text)+'</div><div class="activity-time">'+esc(a.time)+'</div></div></div>'}
+function openModal(html){document.getElementById('modalBody').innerHTML=html;document.getElementById('modal').classList.add('open')}
+function closeModal(){document.getElementById('modal').classList.remove('open')}
+document.getElementById('modal').onclick=e=>{if(e.target.id==='modal')closeModal()}
+function openTask(){openModal('<h3>Add task</h3><div class="field"><label>Task</label><input id="fTitle" autofocus placeholder="What needs to be done?"></div><div class="field"><label>Due</label><select id="fDue"><option>Today</option><option>Tomorrow</option><option>This week</option></select></div><div class="field"><label>Priority</label><select id="fPriority"><option>Medium</option><option>High</option><option>Low</option></select></div><div class="modal-actions"><button class="secondary" onclick="closeModal()">Cancel</button><button class="primary" onclick="addTask()">Add task</button></div>')}
+function addTask(){let title=document.getElementById('fTitle').value.trim();if(!title)return;state.tasks.unshift({id:Date.now(),title,due:document.getElementById('fDue').value,priority:document.getElementById('fPriority').value,done:false});log('Added task: '+title);closeModal();toast('Task added');render()}
+function toggleTask(id){let t=state.tasks.find(x=>x.id===id);if(!t)return;t.done=!t.done;log((t.done?'Completed: ':'Reopened: ')+t.title);render()}
+function openProject(){openModal('<h3>Add project</h3><div class="field"><label>Name</label><input id="pName" placeholder="Project name"></div><div class="field"><label>Description</label><input id="pDesc" placeholder="What is this project?"></div><div class="modal-actions"><button class="secondary" onclick="closeModal()">Cancel</button><button class="primary" onclick="addProject()">Add project</button></div>')}
+function addProject(){let name=document.getElementById('pName').value.trim();if(!name)return;state.projects.unshift({id:Date.now(),name,desc:document.getElementById('pDesc').value.trim(),progress:0});log('Created project: '+name);closeModal();toast('Project created');render()}
+function advanceProject(id){let p=state.projects.find(x=>x.id===id);p.progress=Math.min(100,p.progress+10);log('Advanced '+p.name+' to '+p.progress+'%');render()}
+function openFinance(){openModal('<h3>Log income</h3><div class="field"><label>Amount (KSh)</label><input id="iAmount" type="number" placeholder="0"></div><div class="field"><label>Source</label><input id="iSource" placeholder="Salary, client, side hustle..."></div><div class="modal-actions"><button class="secondary" onclick="closeModal()">Cancel</button><button class="primary" onclick="addIncome()">Log income</button></div>')}
+function addIncome(){let amount=Number(document.getElementById('iAmount').value);let source=document.getElementById('iSource').value.trim()||'Income';if(!amount)return;state.income.unshift({id:Date.now(),amount,source,date:new Date().toLocaleDateString('en-KE',{month:'long',year:'numeric'})});log('Logged '+money(amount)+' from '+source);closeModal();toast('Income logged');render()}
+function openIdea(){openModal('<h3>Capture idea</h3><div class="field"><label>Title</label><input id="ideaTitle" placeholder="Give the idea a name"></div><div class="field"><label>Thought</label><textarea id="ideaBody" rows="5" placeholder="Write it down before it disappears..."></textarea></div><div class="modal-actions"><button class="secondary" onclick="closeModal()">Cancel</button><button class="primary" onclick="addIdea()">Save idea</button></div>')}
+function addIdea(){let title=document.getElementById('ideaTitle').value.trim();let body=document.getElementById('ideaBody').value.trim();if(!title)return;state.ideas.unshift({id:Date.now(),title,body});log('Captured idea: '+title);closeModal();toast('Idea saved');render()}
+function deleteIdea(id){state.ideas=state.ideas.filter(x=>x.id!==id);log('Deleted an idea');render()}
+function openGoal(){openModal('<h3>Add goal</h3><div class="field"><label>Goal</label><input id="goalTitle" placeholder="What are you working toward?"></div><div class="modal-actions"><button class="secondary" onclick="closeModal()">Cancel</button><button class="primary" onclick="addGoal()">Add goal</button></div>')}
+function addGoal(){let title=document.getElementById('goalTitle').value.trim();if(!title)return;state.goals.unshift({id:Date.now(),title,progress:0});log('Created goal: '+title);closeModal();toast('Goal added');render()}
+function advanceGoal(id){let g=state.goals.find(x=>x.id===id);g.progress=Math.min(100,g.progress+10);log('Advanced goal: '+g.title);render()}
+let toastTimer;function toast(msg){let t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),1800)}
 render();
-setInterval(updateTimeContext,60000);
-</script></body></html>
+</script>
+</body>
+</html>
