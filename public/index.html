@@ -266,7 +266,6 @@ document.addEventListener('click',e=>{
   return {version:'0.2.0',normalize,extractDate,extractTime,extractDuration,extractPriority,understand,intents:INTENTS.map(x=>x.id)};
 });
 
-const KyroExecutor=window.KyroExecutor||(()=>null);
 (function(root){'use strict';
 function normalizeState(input){const s=input&&typeof input==='object'?input:{};return{tasks:Array.isArray(s.tasks)?s.tasks.map(t=>({...t})):[],memories:Array.isArray(s.memories)?[...s.memories]:[],ideas:Array.isArray(s.ideas)?[...s.ideas]:[],focus:s.focus||null,plans:Array.isArray(s.plans)?s.plans.map(p=>({...p})):[],projects:s.projects&&typeof s.projects==='object'?{...s.projects}:{}}}
 function findTask(tasks,title){const q=String(title||'').toLowerCase().replace(/^the task called\s+/,'').trim();return tasks.findIndex(t=>String(t.title||t[0]||'').toLowerCase().includes(q))}
@@ -320,7 +319,7 @@ function showCommandResponse(q,understanding){
   $('#planCancel').onclick=()=>box.remove();
   if(understanding.ok)$('#planStart').onclick=()=>{
     const state=kyroStateFromUI();
-    const result=KyroExecutor.execute(action,state);
+    const result=window.KyroExecutor.execute(action,state);
     if(result.ok){persistKyroState(result.state);box.querySelector('.modalbox').innerHTML='<div class="eyebrow">Kyro executed</div><h2>'+esc(result.message)+'</h2><p>'+esc(commandResultText({ok:true,message:result.message,action,result:result.result}))+'</p><div class="modalactions"><button class="btn primary" id="resultDone">Done</button></div>';$('#resultDone').onclick=()=>{box.remove();location.reload();};}
     else {box.querySelector('.modalbox').innerHTML='<div class="eyebrow">Kyro could not execute</div><h2>Execution stopped</h2><p>'+esc(result.message)+'</p><div class="modalactions"><button class="btn primary" id="resultDone">Close</button></div>';$('#resultDone').onclick=()=>box.remove();}
   };
