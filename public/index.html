@@ -1,45 +1,33 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#ffffff">
-<title>Kyro — Personal Command Center</title>
-<link rel="stylesheet" href="styles.css"><style>.metricStrip{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:15px 0}.miniMetric{padding:14px;border:1px solid var(--line);border-radius:14px;background:#fbfcff}.miniMetric .num{font-size:20px;font-weight:800;margin-top:6px}.miniMetric .label{font-size:10px;color:#98a2b3;text-transform:uppercase;letter-spacing:.08em}.chartPanel{height:175px;display:flex;align-items:flex-end;gap:10px;padding:10px 4px 24px}.chartBar{flex:1;height:100%;display:flex;align-items:flex-end;position:relative}.chartBar i{width:100%;background:linear-gradient(180deg,#6b8dff,#2563eb);border-radius:7px 7px 2px 2px}.chartBar b{position:absolute;bottom:-19px;left:50%;transform:translateX(-50%);font-size:9px;color:#98a2b3}.breakdown{display:grid;gap:11px}.breakRow{display:flex;align-items:center;gap:8px;font-size:11px}.breakTrack{height:6px;background:#edf1f5;border-radius:99px;flex:1}.breakFill{height:100%;border-radius:99px;background:#2563eb}.calendarGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.calendarGrid span{font-size:9px;color:#98a2b3;text-align:center}.dayCell{min-height:48px;padding:7px;border:1px solid #edf0f4;border-radius:9px;font-size:10px}.todayCell{background:#edf4ff;border-color:#bfd0ff;color:#2563eb;font-weight:800}.eventDot{display:block;margin-top:5px;font-size:8px;color:#2563eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}@media(max-width:760px){.metricStrip{grid-template-columns:1fr}}</style>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kyro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<div class="aur"><i></i><i></i><i></i></div><div id="glow"></div>
 <div class="app">
-<aside class="sidebar" id="sidebar">
-  <div class="brand"><div class="logo">K</div><span>Kyro</span></div>
-  <nav class="nav" id="nav">
-    <button class="active" data-view="dashboard"><span class="icon">⌂</span>Dashboard</button>
-    <button data-view="tasks"><span class="icon">✓</span>Tasks</button>
-    <button data-view="projects"><span class="icon">▣</span>Projects</button>
-    <button data-view="finance"><span class="icon">◈</span>Finance</button>
-    <button data-view="ideas"><span class="icon">✦</span>Ideas</button>
-    <button data-view="goals"><span class="icon">◎</span>Goals</button>
-  </nav>
-  <div class="section-label">Workspace</div>
-  <nav class="nav">
-    <button data-view="activity"><span class="icon">◷</span>Activity</button>
-  </nav>
-  <div class="side-footer"><div class="profile"><div class="avatar">G</div><div><strong>Glen</strong><div style="font-size:11px;color:#98a2b3">Personal workspace</div></div></div></div>
-</aside>
-<div class="mobile-overlay" id="overlay"></div>
-<main class="main">
-<header class="top"><div class="top-left"><button class="menu" id="menu">☰</button><h1>Personal Command Center</h1></div><div class="date" id="date"></div></header>
-
-<section class="view active" id="dashboard"><div class="hero"><div><div class="eyebrow">YOUR DAY</div><h2 id="greeting">Good afternoon, Glen.</h2><p>Everything important, in one place.</p></div><div style="display:flex;gap:8px"><button class="secondary" onclick="showView('finance')">Finances</button><button class="primary" onclick="openTask()">+ Add task</button></div></div><div class="grid4"><div class="stat"><div class="stat-top"><span>Today's focus</span><span>✓</span></div><div class="stat-value" id="statTasks">0</div><div class="stat-note"><b style="color:#16a36a" id="focusCompleted">0 completed</b> · <span id="focusPlanned">5 planned</span></div></div><div class="stat"><div class="stat-top"><span>Active projects</span><span>▣</span></div><div class="stat-value" id="statProjects">0</div><div class="stat-note"><b style="color:#16a36a">+1</b> this month</div></div><div class="stat"><div class="stat-top"><span>October income</span><span>◈</span></div><div class="stat-value" id="statIncome">KSh 31,450</div><div class="stat-note"><b style="color:#16a36a">Balanced</b> against October allocation</div></div><div class="stat"><div class="stat-top"><span>Goal progress</span><span>◎</span></div><div class="stat-value" id="statGoalProgress">0%</div><div class="stat-note">Average across goals</div></div></div><div class="metricStrip"><div class="miniMetric"><div class="label">Focus time</div><div class="num">6h 20m</div><div class="tiny muted">↑ 42m vs last week</div></div><div class="miniMetric"><div class="label">Completion rate</div><div class="num">86%</div><div class="tiny muted">24 of 28 tasks</div></div><div class="miniMetric"><div class="label">Current streak</div><div class="num">9 days</div><div class="tiny muted">Personal best</div></div></div><div class="dashboardGrid"><div class="card"><div class="card-head"><h3>Today's focus</h3><button class="link" onclick="showView('tasks')">View all</button></div><div id="dashTasks"></div></div><div class="card"><div class="card-head"><h3>Weekly execution</h3><span class="pill blue">24 completed</span></div><div class="chartPanel"><div class="chartBar"><i style="height:42%"></i><b>M</b></div><div class="chartBar"><i style="height:58%"></i><b>T</b></div><div class="chartBar"><i style="height:51%"></i><b>W</b></div><div class="chartBar"><i style="height:73%"></i><b>T</b></div><div class="chartBar"><i style="height:62%"></i><b>F</b></div><div class="chartBar"><i style="height:88%"></i><b>S</b></div><div class="chartBar"><i style="height:47%"></i><b>S</b></div></div></div><div class="card"><div class="card-head"><h3>Active projects</h3><button class="link" onclick="showView('projects')">Manage</button></div><div id="dashProjects"></div></div><div class="card"><div class="card-head"><h3>October allocation</h3><span class="tiny muted" id="spendingTotal">KSh 31,450</span></div><div class="breakdown" id="spendingBreakdown"></div><div class="tiny muted" style="margin-top:15px">Allocated <b style="color:#16a36a" id="allocationCheck">KSh 31,450</b> of October income.</div></div><div class="card"><div class="card-head"><h3>Upcoming</h3><button class="link" onclick="showView('tasks')">Open tasks</button></div><div id="upcoming"></div></div><div class="card"><div class="card-head"><h3>Recent activity</h3><button class="link" onclick="showView('activity')">See all</button></div><div class="activity" id="dashActivity"></div></div><div class="card" style="grid-column:1/-1"><div class="card-head"><h3>October calendar</h3><span class="pill green">4 important dates</span></div><div class="calendarGrid"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span><div class="dayCell ">1</div><div class="dayCell ">2</div><div class="dayCell ">3</div><div class="dayCell ">4</div><div class="dayCell ">5</div><div class="dayCell ">6</div><div class="dayCell todayCell">7<span class="eventDot">● Analysis</span></div><div class="dayCell ">8<span class="eventDot">● Kcreatives</span></div><div class="dayCell ">9</div><div class="dayCell ">10<span class="eventDot">● Study</span></div><div class="dayCell ">11</div><div class="dayCell ">12</div><div class="dayCell ">13</div><div class="dayCell ">14<span class="eventDot">● Review</span></div><div class="dayCell ">15</div><div class="dayCell ">16</div><div class="dayCell ">17</div><div class="dayCell ">18</div><div class="dayCell ">19</div><div class="dayCell ">20</div><div class="dayCell ">21</div><div class="dayCell ">22</div><div class="dayCell ">23</div><div class="dayCell ">24</div><div class="dayCell ">25</div><div class="dayCell ">26</div><div class="dayCell ">27</div><div class="dayCell ">28</div><div class="dayCell ">29</div><div class="dayCell ">30</div><div class="dayCell ">31</div></div></div></div></section>
-
-<section class="view" id="tasks"><div class="page-head"><h2>Tasks</h2><div class="toolbar"><button class="primary" onclick="openTask()">+ Add task</button></div></div><div class="list" id="taskList"></div></section>
-<section class="view" id="projects"><div class="page-head"><h2>Projects</h2><button class="primary" onclick="openProject()">+ Add project</button></div><div class="cards3" id="projectList"></div></section>
-<section class="view" id="finance"><div class="page-head"><h2>Finance</h2><button class="primary" onclick="openFinance()">+ Log income</button></div><div class="grid4" id="financeStats"></div><div class="card"><div class="card-head"><h3>Recent income</h3></div><div class="list" id="incomeList"></div></div></section>
-<section class="view" id="ideas"><div class="page-head"><h2>Ideas</h2><button class="primary" onclick="openIdea()">+ Capture idea</button></div><div class="cards3" id="ideaList"></div></section>
-<section class="view" id="goals"><div class="page-head"><h2>Goals</h2><button class="primary" onclick="openGoal()">+ Add goal</button></div><div class="list" id="goalList"></div></section>
-<section class="view" id="activity"><div class="page-head"><h2>Activity</h2></div><div class="card"><div class="activity" id="activityList"></div></div></section>
-</main></div>
-
-<div class="modal-backdrop" id="modal"><div class="modal" id="modalBody"></div></div><div class="toast" id="toast"></div>
+  <aside id="side"><div class="brand"><span class="mark"></span>Kyro</div><i id="pill"></i><nav id="nav"></nav></aside>
+  <div id="ov" data-action="close-menu"></div>
+  <div class="main">
+    <header>
+      <button class="btn" id="menu" data-action="menu" aria-label="Open menu">Menu</button>
+      <h1 id="title">Dashboard</h1>
+      <button class="btn" data-action="palette">Search<kbd>Ctrl K</kbd></button>
+      <button class="btn p" data-action="open-form" data-form="task">Add task<kbd>N</kbd></button>
+    </header>
+    <main id="main"></main>
+  </div>
+</div>
+<div id="modal" hidden></div>
+<div id="pal" hidden></div>
+<input type="file" id="imp" accept="application/json" hidden>
+<div id="toasts" aria-live="polite"></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div id="intro" aria-hidden="true"><span class="mark"></span><b>Kyro</b></div>
 
 <script src="app.js"></script>
 </body>
