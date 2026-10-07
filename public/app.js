@@ -1,104 +1,498 @@
-const KEY='kyro.v2';
-const seed={
- tasks:[
-  {id:1,title:'Review structural analysis',due:'Today',priority:'High',done:false},
-  {id:2,title:'Work on Kcreatives homepage',due:'Today',priority:'High',done:false},
-  {id:3,title:'Study for 2 hours',due:'Today',priority:'Medium',done:false},
-  {id:4,title:'Review Kyro project roadmap',due:'Today',priority:'Medium',done:false},
-  {id:5,title:'Send Golf Hotel proposal',due:'Tomorrow',priority:'High',done:false}
- ],
- projects:[
-  {id:1,name:'Kcreatives',desc:'Branding, graphic design and client work',progress:82},
-  {id:2,name:'Kyro',desc:'Personal command center',progress:48},
-  {id:3,name:'Fixly',desc:'Product development',progress:64},
-  {id:4,name:'MMUST HostelHub',desc:'Student booking platform',progress:41}
- ],
- income:[{id:1,amount:31450,source:'October income',date:'October 2026'}],
- spending:[{name:'Needs',amount:14467},{name:'Savings',amount:8177},{name:'Business',amount:5032},{name:'Other',amount:3774}],
- ideas:[
-  {id:1,title:'Kcreatives client portal',body:'A simple client workspace for projects, deliverables and updates.'},
-  {id:2,title:'Student command center',body:'A focused workspace for university students.'}
- ],
- goals:[
-  {id:1,title:'Build Kcreatives into a consistent side business',progress:42},
-  {id:2,title:'Maintain a strong university performance',progress:58},
-  {id:3,title:'Build a 3-month emergency buffer',progress:31},
-  {id:4,title:'Ship Kyro V1',progress:72}
- ],
- activity:[
-  {text:'Logged October income — KSh 31,450',time:'Today'},
-  {text:'Kyro personal command center updated',time:'Today'},
-  {text:'Kcreatives moved to 82%',time:'Today'}
- ]
-};
-let state;
-try{state=JSON.parse(localStorage.getItem(KEY)||'null')||seed}catch(e){state=seed}
-const $=id=>document.getElementById(id);
-const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-const money=n=>'KSh '+Number(n||0).toLocaleString('en-KE');
-const incomeTotal=()=>state.income.reduce((s,x)=>s+Number(x.amount||0),0);
-const allocationTotal=()=>state.spending.reduce((s,x)=>s+Number(x.amount||0),0);
-const goalAverage=()=>state.goals.length?Math.round(state.goals.reduce((s,x)=>s+Number(x.progress||0),0)/state.goals.length):0;
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
-function log(text){state.activity.unshift({text,time:'Just now'});state.activity=state.activity.slice(0,20);save()}
-function showView(id){
- document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));
- document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===id));
- $('sidebar').classList.remove('open');$('overlay').classList.remove('open');render();
-}
-function openModal(html){$('modalBody').innerHTML=html;$('modal').classList.add('open');setTimeout(()=>{const x=$('modalBody').querySelector('input');if(x)x.focus()},0)}
-function closeModal(){$('modal').classList.remove('open')}
-function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(window.__kyroToast);window.__kyroToast=setTimeout(()=>t.classList.remove('show'),1800)}
-function taskHTML(t){return '<div class="task '+(t.done?'done':'')+'"><button type="button" class="check '+(t.done?'done':'')+'" data-action="toggle-task" data-id="'+t.id+'">'+(t.done?'✓':'')+'</button><div class="task-main"><div class="task-title">'+esc(t.title)+'</div><div class="task-meta">'+esc(t.due)+' · '+esc(t.priority)+'</div></div><span class="pill '+(t.priority==='High'?'amber':'')+'">'+(t.done?'Done':esc(t.priority))+'</span></div>'}
-function projectHTML(p){return '<div class="project"><div class="project-row"><span class="project-name">'+esc(p.name)+'</span><span class="pill">'+p.progress+'%</span></div><div class="progress"><div class="bar" style="width:'+p.progress+'%"></div></div></div>'}
-function projectCard(p){return '<div class="card"><span class="pill blue">Project</span><h3>'+esc(p.name)+'</h3><p style="color:#667085;line-height:1.5">'+esc(p.desc)+'</p><div class="project-row"><span style="font-size:12px;color:#667085">Progress</span><strong>'+p.progress+'%</strong></div><div class="progress"><div class="bar" style="width:'+p.progress+'%"></div></div><div style="margin-top:14px"><button type="button" class="secondary" data-action="advance-project" data-id="'+p.id+'">Advance</button></div></div>'}
-function activityHTML(a){return '<div class="activity-item"><span class="dot"></span><div><div>'+esc(a.text)+'</div><div class="activity-time">'+esc(a.time)+'</div></div></div>'}
-function render(){
- $('statTasks').textContent=state.tasks.filter(t=>!t.done&&t.due==='Today').length;
- $('statProjects').textContent=state.projects.length;
- $('statIncome').textContent=money(incomeTotal());
- $('spendingTotal').textContent=money(allocationTotal());
- $('allocationCheck').textContent=money(allocationTotal());
- $('spendingBreakdown').innerHTML=state.spending.map(x=>{const pct=allocationTotal()?Math.round(x.amount/allocationTotal()*100):0;return '<div class="breakRow"><span>'+esc(x.name)+'</span><div class="breakTrack"><div class="breakFill" style="width:'+pct+'%"></div></div><b>'+pct+'%</b></div>'}).join('');
- $('dashTasks').innerHTML=state.tasks.filter(t=>t.due==='Today').slice(0,5).map(taskHTML).join('')||'<div class="empty"><strong>No tasks today</strong>Your day is clear.</div>';
- $('taskList').innerHTML=state.tasks.map(taskHTML).join('')||'<div class="card empty"><strong>No tasks yet</strong>Add your first task.</div>';
- $('dashProjects').innerHTML=state.projects.slice(0,4).map(projectHTML).join('');
- $('projectList').innerHTML=state.projects.map(projectCard).join('');
- $('upcoming').innerHTML=state.tasks.filter(t=>t.due!=='Today'&&!t.done).slice(0,4).map(t=>'<div class="task"><div class="task-main"><div class="task-title">'+esc(t.title)+'</div><div class="task-meta">'+esc(t.due)+'</div></div><span class="pill">'+esc(t.priority)+'</span></div>').join('')||'<div class="empty">Nothing upcoming.</div>';
- $('dashActivity').innerHTML=state.activity.slice(0,5).map(activityHTML).join('');
- $('activityList').innerHTML=state.activity.map(activityHTML).join('');
- const total=incomeTotal();
- $('financeStats').innerHTML='<div class="stat"><div class="stat-top">Income</div><div class="finance-number positive">'+money(total)+'</div><div class="stat-note">logged</div></div><div class="stat"><div class="stat-top">Entries</div><div class="finance-number">'+state.income.length+'</div><div class="stat-note">income records</div></div><div class="stat"><div class="stat-top">Average</div><div class="finance-number">'+money(state.income.length?total/state.income.length:0)+'</div><div class="stat-note">per entry</div></div><div class="stat"><div class="stat-top">Currency</div><div class="finance-number">KES</div><div class="stat-note">Kenyan shilling</div></div>';
- $('incomeList').innerHTML=state.income.map(x=>'<div class="row"><div class="row-main"><div class="row-title">'+money(x.amount)+'</div><div class="row-sub">'+esc(x.source)+' · '+esc(x.date)+'</div></div></div>').join('');
- $('ideaList').innerHTML=state.ideas.map(x=>'<div class="card idea"><span class="pill blue">Idea</span><h3>'+esc(x.title)+'</h3><p>'+esc(x.body)+'</p><button type="button" class="link" data-action="delete-idea" data-id="'+x.id+'">Delete</button></div>').join('');
- $('goalList').innerHTML=state.goals.map(x=>'<div class="row goal"><div class="goal-circle">'+x.progress+'%</div><div class="row-main"><div class="row-title">'+esc(x.title)+'</div><div class="progress"><div class="bar" style="width:'+x.progress+'%"></div></div></div><button type="button" class="secondary" data-action="advance-goal" data-id="'+x.id+'">+10%</button></div>').join('');
-}
-function openTask(){openModal('<h3>Add task</h3><form id="taskForm"><div class="field"><label>Task</label><input id="fTitle" required placeholder="What needs to be done?"></div><div class="field"><label>Due</label><select id="fDue"><option>Today</option><option>Tomorrow</option><option>This week</option></select></div><div class="field"><label>Priority</label><select id="fPriority"><option>Medium</option><option>High</option><option>Low</option></select></div><div class="modal-actions"><button type="button" class="secondary" data-action="close-modal">Cancel</button><button type="submit" class="primary">Add task</button></div></form>')}
-function openProject(){openModal('<h3>Add project</h3><form id="projectForm"><div class="field"><label>Name</label><input id="pName" required placeholder="Project name"></div><div class="field"><label>Description</label><input id="pDesc" placeholder="What is this project?"></div><div class="modal-actions"><button type="button" class="secondary" data-action="close-modal">Cancel</button><button type="submit" class="primary">Add project</button></div></form>')}
-function openFinance(){openModal('<h3>Log income</h3><form id="incomeForm"><div class="field"><label>Amount (KSh)</label><input id="iAmount" type="number" min="1" required placeholder="0"></div><div class="field"><label>Source</label><input id="iSource" required placeholder="Salary, client, side hustle..."></div><div class="modal-actions"><button type="button" class="secondary" data-action="close-modal">Cancel</button><button type="submit" class="primary">Log income</button></div></form>')}
-function openIdea(){openModal('<h3>Capture idea</h3><form id="ideaForm"><div class="field"><label>Title</label><input id="ideaTitle" required placeholder="Give the idea a name"></div><div class="field"><label>Thought</label><textarea id="ideaBody" rows="5" placeholder="Write it down..."></textarea></div><div class="modal-actions"><button type="button" class="secondary" data-action="close-modal">Cancel</button><button type="submit" class="primary">Save idea</button></div></form>')}
-function openGoal(){openModal('<h3>Add goal</h3><form id="goalForm"><div class="field"><label>Goal</label><input id="goalTitle" required placeholder="What are you working toward?"></div><div class="modal-actions"><button type="button" class="secondary" data-action="close-modal">Cancel</button><button type="submit" class="primary">Add goal</button></div></form>')}
-document.addEventListener('click',e=>{
- const b=e.target.closest('[data-view]');if(b){e.preventDefault();showView(b.dataset.view);return}
- const a=e.target.closest('[data-action]');if(!a)return;
- e.preventDefault();const id=Number(a.dataset.id);
- if(a.dataset.action==='open-task')openTask();
- else if(a.dataset.action==='close-modal')closeModal();
- else if(a.dataset.action==='toggle-task'){const t=state.tasks.find(x=>x.id===id);if(t){t.done=!t.done;log((t.done?'Completed: ':'Reopened: ')+t.title);render()}}
- else if(a.dataset.action==='advance-project'){const p=state.projects.find(x=>x.id===id);if(p){p.progress=Math.min(100,p.progress+10);log('Advanced '+p.name+' to '+p.progress+'%');render()}}
- else if(a.dataset.action==='advance-goal'){const g=state.goals.find(x=>x.id===id);if(g){g.progress=Math.min(100,g.progress+10);log('Advanced goal: '+g.title);render()}}
- else if(a.dataset.action==='delete-idea'){state.ideas=state.ideas.filter(x=>x.id!==id);log('Deleted an idea');render()}
-});
-document.addEventListener('submit',e=>{
- if(e.target.id==='taskForm'){e.preventDefault();const title=$('fTitle').value.trim();if(!title)return;state.tasks.unshift({id:Date.now(),title,due:$('fDue').value,priority:$('fPriority').value,done:false});log('Added task: '+title);closeModal();toast('Task added');render()}
- if(e.target.id==='projectForm'){e.preventDefault();const name=$('pName').value.trim();if(!name)return;state.projects.unshift({id:Date.now(),name,desc:$('pDesc').value.trim(),progress:0});log('Created project: '+name);closeModal();toast('Project created');render()}
- if(e.target.id==='incomeForm'){e.preventDefault();const amount=Number($('iAmount').value);const source=$('iSource').value.trim();if(!Number.isFinite(amount)||amount<=0||!source)return;state.income.unshift({id:Date.now(),amount,source,date:new Date().toLocaleDateString('en-KE',{month:'long',year:'numeric'})});log('Logged '+money(amount)+' from '+source);closeModal();toast('Income logged');render()}
- if(e.target.id==='ideaForm'){e.preventDefault();const title=$('ideaTitle').value.trim();if(!title)return;state.ideas.unshift({id:Date.now(),title,body:$('ideaBody').value.trim()});log('Captured idea: '+title);closeModal();toast('Idea saved');render()}
- if(e.target.id==='goalForm'){e.preventDefault();const title=$('goalTitle').value.trim();if(!title)return;state.goals.unshift({id:Date.now(),title,progress:0});log('Created goal: '+title);closeModal();toast('Goal added');render()}
-});
-$('menu').addEventListener('click',()=>{$('sidebar').classList.add('open');$('overlay').classList.add('open')});
-$('overlay').addEventListener('click',()=>{$('sidebar').classList.remove('open');$('overlay').classList.remove('open')});
-$('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal()});
-$('greeting').textContent=(new Date().getHours()<12?'Good morning':new Date().getHours()<17?'Good afternoon':'Good evening')+', Glen.';
-$('date').textContent=new Date().toLocaleDateString('en-KE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-render();
+(function () {
+  'use strict';
+
+  var KEY = 'kyro.v2';
+  var VIEWS = [['dashboard','Dashboard'],['tasks','Tasks'],['projects','Projects'],['finance','Finance'],['ideas','Ideas'],['goals','Goals'],['activity','Activity']];
+  var SPLIT = [['needs','Needs',14467],['savings','Savings',8177],['business','Business',5032],['other','Other',3774]];
+  var SPLIT_TOTAL = 31450;
+  var COLORS = {needs:'#1f5cff',savings:'#12a150',business:'#7c3aed',other:'#f59e0b'};
+
+  var ICONS = {
+    dashboard:'<rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/>',
+    tasks:'<path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/>',
+    projects:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+    finance:'<rect x="2" y="6" width="20" height="13" rx="3"/><path d="M2 11h20"/>',
+    ideas:'<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/>',
+    goals:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>',
+    activity:'<path d="M3 12h4l3-8 4 16 3-8h4"/>'
+  };
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function money(n) { return 'KSh ' + Math.round(n).toLocaleString('en-US'); }
+  function monthLabel(m) { var p = m.split('-'); return new Date(+p[0], +p[1] - 1, 1).toLocaleString('en-US', {month:'long', year:'numeric'}); }
+  function thisMonth() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2); }
+
+  // Split any amount using the October ratios; remainder goes to Needs so the total is always exact.
+  function allocate(amount) {
+    var a = {}, used = 0;
+    SPLIT.forEach(function (s) { a[s[0]] = Math.floor(amount * s[2] / SPLIT_TOTAL); used += a[s[0]]; });
+    a.needs += amount - used;
+    return a;
+  }
+
+  function seed() {
+    return {
+      v: 2, view: 'dashboard',
+      tasks: [
+        {id:'t1', title:'Review structural analysis', due:'Today', pri:'High', done:false},
+        {id:'t2', title:'Work on Kcreatives homepage', due:'Today', pri:'High', done:false},
+        {id:'t3', title:'Study for 2 hours', due:'Today', pri:'Medium', done:false},
+        {id:'t4', title:'Review Kyro project roadmap', due:'Today', pri:'Medium', done:false},
+        {id:'t5', title:'Send Golf Hotel proposal', due:'Tomorrow', pri:'High', done:false}
+      ],
+      projects: [
+        {id:'p1', name:'Kcreatives', pct:82}, {id:'p2', name:'Kyro', pct:48},
+        {id:'p3', name:'Fixly', pct:64}, {id:'p4', name:'MMUST HostelHub', pct:41}
+      ],
+      income: [
+        {id:'i1', month:'2026-10', source:'October income', amount:31450,
+         alloc:{needs:14467, savings:8177, business:5032, other:3774}}
+      ],
+      ideas: [
+        {id:'d1', text:'Kcreatives client portal'}, {id:'d2', text:'Student command center'}
+      ],
+      goals: [
+        {id:'g1', name:'Build Kcreatives into a consistent side business', pct:42},
+        {id:'g2', name:'Maintain a strong university performance', pct:58},
+        {id:'g3', name:'Build a 3-month emergency buffer', pct:31},
+        {id:'g4', name:'Ship Kyro V1', pct:72}
+      ],
+      activity: [{id:'a1', text:'Kyro workspace created', at:Date.now()}]
+    };
+  }
+
+  function valid(s) {
+    return s && s.v === 2 && ['tasks','projects','income','ideas','goals','activity'].every(function (k) { return Array.isArray(s[k]); });
+  }
+
+  var state;
+  var storageOK = true;
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) { var s = JSON.parse(raw); if (valid(s)) return s; }
+    } catch (e) { storageOK = false; }
+    return seed();
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); }
+    catch (e) { if (storageOK) { storageOK = false; toast('Storage is unavailable. Changes will not survive a refresh.'); } }
+  }
+
+  function toast(msg) {
+    var t = document.createElement('div');
+    t.className = 'toast'; t.textContent = msg;
+    $('toasts').appendChild(t);
+    setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 2600);
+  }
+  function log(text) {
+    state.activity.unshift({id:uid(), text:text, at:Date.now()});
+    if (state.activity.length > 100) state.activity.length = 100;
+  }
+  function commit(msg, activity) {
+    if (activity) log(activity);
+    save(); render();
+    if (msg) toast(msg);
+  }
+
+  /* ---------- views ---------- */
+  function bar(p) { return '<div class="bar"><i style="width:' + p + '%"></i></div>'; }
+  function taskRow(t) {
+    return '<div class="row' + (t.done ? ' done' : '') + '">' +
+      '<button class="chk" data-action="toggle-task" data-id="' + esc(t.id) + '" aria-label="Toggle task"></button>' +
+      '<span class="t">' + esc(t.title) + '</span><span class="tag ' + esc(t.pri) + '">' + esc(t.pri) + '</span>' +
+      '<span class="mut">' + esc(t.due) + '</span>' +
+      '<button class="btn s d" data-action="del-task" data-id="' + esc(t.id) + '">Delete</button></div>';
+  }
+  function monthTotal(m) { return state.income.filter(function (i) { return i.month === m; }).reduce(function (a, i) { return a + i.amount; }, 0); }
+  function monthAlloc(m) {
+    var o = {needs:0, savings:0, business:0, other:0};
+    state.income.forEach(function (i) { if (i.month === m) for (var k in o) o[k] += i.alloc[k]; });
+    return o;
+  }
+  function months() {
+    var seen = {}; state.income.forEach(function (i) { seen[i.month] = 1; });
+    return Object.keys(seen).sort().reverse();
+  }
+  function avg(a) { return a.length ? Math.round(a.reduce(function (s, x) { return s + x.pct; }, 0) / a.length) : 0; }
+
+  var RM = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var fx = $('fx'), cx = fx.getContext('2d'), parts = [], fxRaf = 0, enT = 0;
+  function fxSize() { var d = window.devicePixelRatio || 1; fx.width = innerWidth * d; fx.height = innerHeight * d; cx.setTransform(d, 0, 0, d, 0, 0); }
+  fxSize(); window.addEventListener('resize', fxSize);
+  function fxTick() {
+    cx.clearRect(0, 0, innerWidth, innerHeight);
+    parts = parts.filter(function (p) { return p.l > 0; });
+    parts.forEach(function (p) {
+      p.vy += 0.35; p.vx *= 0.985; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.l -= 0.011;
+      cx.save(); cx.globalAlpha = Math.max(p.l, 0); cx.translate(p.x, p.y); cx.rotate(p.rot); cx.fillStyle = p.c;
+      if (p.sq) cx.fillRect(-p.r, -p.r / 2, p.r * 2, p.r); else { cx.beginPath(); cx.arc(0, 0, p.r / 1.6, 0, 6.3); cx.fill(); }
+      cx.restore();
+    });
+    fxRaf = parts.length ? requestAnimationFrame(fxTick) : 0;
+    if (!parts.length) cx.clearRect(0, 0, innerWidth, innerHeight);
+  }
+  function burst(x, y, n) {
+    if (RM) return;
+    var C = ['#1d5bff', '#8b5cf6', '#06b6d4', '#10a25a', '#f59e0b', '#ff4d6d'];
+    for (var i = 0; i < n; i++) {
+      var a = Math.random() * 6.283, v = 3 + Math.random() * 10;
+      parts.push({x:x, y:y, vx:Math.cos(a) * v, vy:Math.sin(a) * v - 6, r:3 + Math.random() * 5, rot:Math.random() * 6, vr:(Math.random() - 0.5) * 0.4, c:C[i % 6], l:1 + Math.random() * 0.4, sq:i % 2 === 0});
+    }
+    if (!fxRaf) fxRaf = requestAnimationFrame(fxTick);
+  }
+  function enter() {
+    var m = $('main'); if (RM) return;
+    Array.prototype.forEach.call(m.querySelectorAll('.hx,.head,.card,.row'), function (n, i) { n.style.setProperty('--i', i); });
+    m.classList.add('enter'); clearTimeout(enT);
+    enT = setTimeout(function () { m.classList.remove('enter'); }, 2200);
+  }
+  function pillTo() {
+    var on = document.querySelector('.nav.on'), p = $('pill');
+    if (on && p) { p.style.height = on.offsetHeight + 'px'; p.style.transform = 'translateY(' + on.offsetTop + 'px)'; }
+  }
+  function tagKpis() {
+    Array.prototype.forEach.call(document.querySelectorAll('.kpi b:not([data-count])'), function (b) {
+      var n = parseInt(b.textContent, 10);
+      if (!isNaN(n)) { b.setAttribute('data-count', n); if (b.textContent.indexOf('%') > -1) b.setAttribute('data-suf', '%'); }
+    });
+  }
+  function animBar(id, from, to) {
+    var b = document.querySelector('[data-id="' + id + '"]'), row = b && b.closest('.row'), i = row ? row.querySelector('.bar i') : null;
+    if (!i || RM) return;
+    i.style.transition = 'none'; i.style.width = from + '%';
+    requestAnimationFrame(function () { requestAnimationFrame(function () { i.style.transition = ''; i.style.width = to + '%'; }); });
+  }
+  var gx = 0, gy = 0, tx = 0, ty = 0, gr = 0;
+  function glowTick() {
+    gx += (tx - gx) * 0.12; gy += (ty - gy) * 0.12;
+    $('glow').style.transform = 'translate(' + gx + 'px,' + gy + 'px)';
+    gr = (Math.abs(tx - gx) + Math.abs(ty - gy) > 0.5) ? requestAnimationFrame(glowTick) : 0;
+  }
+  (function () {
+    var el = $('intro'), seen = false; if (!el) return;
+    try { seen = !!sessionStorage.getItem('kyro.intro'); sessionStorage.setItem('kyro.intro', '1'); } catch (e) {}
+    if (seen || RM) { el.remove(); return; }
+    setTimeout(function () { if (el.parentNode) el.remove(); }, 2300);
+  })();
+
+  var lastView = null;
+  function ringsSvg(vals) {
+    var R = [86, 68, 50, 32];
+    return '<svg class="rings" viewBox="0 0 200 200" aria-hidden="true">' + vals.map(function (v, i) {
+      var r = R[i], c = 2 * Math.PI * r;
+      return '<circle class="trk" cx="100" cy="100" r="' + r + '"/><circle class="ring" cx="100" cy="100" r="' + r + '" stroke="' + v.c + '" stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + c.toFixed(1) + '" data-to="' + (c * (1 - Math.min(1, v.p / 100))).toFixed(1) + '"/>';
+    }).join('') + '</svg>';
+  }
+  function hero(cm) {
+    var h = new Date().getHours(), g = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+    var all = state.tasks.filter(function (t) { return t.due === 'Today'; });
+    var dn = all.filter(function (t) { return t.done; }).length;
+    var tp = all.length ? dn / all.length * 100 : 0, pp = avg(state.projects), gp = avg(state.goals);
+    var tot = monthTotal(cm), a = monthAlloc(cm), ap = tot ? (a.needs + a.savings + a.business + a.other) / tot * 100 : 0;
+    var mo = Math.round((tp + pp + gp) / 3);
+    var L = [['Tasks today', tp, '#1d5bff'], ['Projects', pp, '#8b5cf6'], ['Goals', gp, '#06b6d4'], ['Allocated', ap, '#10a25a']];
+    return '<section class="hx"><div><div class="hl">' + esc(new Date().toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'})) + '</div>' +
+      '<h2>' + g + '.<br>Here is your day.</h2><p>' + dn + ' of ' + all.length + ' tasks done today. Momentum blends tasks, projects and goals.</p>' +
+      '<div class="chips"><button class="chip b" data-action="open-form" data-form="task">New task</button><button class="chip" data-action="open-form" data-form="income">Log income</button><button class="chip o" data-action="open-form" data-form="idea">Capture idea</button></div></div>' +
+      '<div class="hxr"><div class="rw">' + ringsSvg(L.map(function (x) { return {p:x[1], c:x[2]}; })) +
+      '<div class="mid"><b data-count="' + mo + '">' + mo + '</b><span>Momentum</span></div></div>' +
+      '<div class="leg">' + L.map(function (x) { return '<div><i style="background:' + x[2] + '"></i>' + x[0] + '<b>' + Math.round(x[1]) + '%</b></div>'; }).join('') + '</div></div></section>';
+  }
+  function afterRender() {
+    var fresh = lastView !== state.view; lastView = state.view;
+    if (fresh) enter(); else $('main').classList.remove('enter');
+    pillTo();
+    Array.prototype.forEach.call(document.querySelectorAll('.ring'), function (r) {
+      if (fresh) requestAnimationFrame(function () { requestAnimationFrame(function () { r.style.strokeDashoffset = r.getAttribute('data-to'); }); });
+      else { r.style.transition = 'none'; r.style.strokeDashoffset = r.getAttribute('data-to'); }
+    });
+    if (!fresh || RM) return;
+    tagKpis();
+    Array.prototype.forEach.call(document.querySelectorAll('[data-count]'), function (el) {
+      var to = +el.getAttribute('data-count'), m = el.hasAttribute('data-money'), t0 = performance.now();
+      function f(t) { var k = Math.min(1, (t - t0) / 900), v = Math.round(to * (1 - Math.pow(1 - k, 3))); el.textContent = m ? money(v) : v + (el.getAttribute('data-suf') || ''); if (k < 1) requestAnimationFrame(f); }
+      requestAnimationFrame(f);
+    });
+  }
+
+  var palSel = 0, palItems = [];
+  function palList(q) {
+    var all = VIEWS.map(function (v) { return {l:'Go to ' + v[1], run:function () { go(v[0]); }}; });
+    [['task','Add task'],['project','Add project'],['income','Log income'],['idea','Capture idea'],['goal','Add goal']].forEach(function (a) {
+      all.push({l:a[1], run:function () { openForm(a[0]); }});
+    });
+    q = q.toLowerCase();
+    return all.filter(function (i) { return i.l.toLowerCase().indexOf(q) > -1; });
+  }
+  function palDraw(q) {
+    palItems = palList(q); palSel = 0;
+    $('pl').innerHTML = palItems.map(function (i, n) { return '<button class="pi' + (n === 0 ? ' on' : '') + '" data-pi="' + n + '">' + esc(i.l) + '</button>'; }).join('') || '<div class="empty">No matches</div>';
+  }
+  function openPal() {
+    setMenu(false);
+    $('pal').innerHTML = '<div class="psheet"><input id="pq" placeholder="Jump to a section or start an action" autocomplete="off" aria-label="Search"><div id="pl"></div></div>';
+    $('pal').hidden = false; palDraw(''); $('pq').focus();
+  }
+  function closePal() { $('pal').hidden = true; $('pal').innerHTML = ''; }
+  function palMove(d) {
+    if (!palItems.length) return;
+    palSel = (palSel + d + palItems.length) % palItems.length;
+    Array.prototype.forEach.call(document.querySelectorAll('.pi'), function (b, n) { b.classList.toggle('on', n === palSel); if (n === palSel) b.scrollIntoView({block:'nearest'}); });
+  }
+  function palRun(n) { var it = palItems[n]; closePal(); if (it) it.run(); }
+
+  var views = {
+    dashboard: function () {
+      var today = state.tasks.filter(function (t) { return t.due === 'Today' && !t.done; });
+      var cm = months()[0] || thisMonth();
+      return hero(cm) + '<div class="grid">' +
+        '<div class="card kpi"><span>Open tasks today</span><b>' + today.length + '</b></div>' +
+        '<div class="card kpi"><span>Average project progress</span><b>' + avg(state.projects) + '%</b></div>' +
+        '<div class="card kpi"><span>' + esc(monthLabel(cm)) + ' income</span><b data-money="1" data-count="' + monthTotal(cm) + '">' + money(monthTotal(cm)) + '</b></div>' +
+        '<div class="card kpi"><span>Average goal progress</span><b>' + avg(state.goals) + '%</b></div></div>' +
+        '<div class="grid" style="margin-top:16px"><div class="card"><h3>Due today</h3>' +
+        (today.length ? today.map(taskRow).join('') : '<div class="empty">Nothing left for today.</div>') + '</div>' +
+        '<div class="card"><h3>Projects</h3>' + state.projects.map(function (p) {
+          return '<div class="row"><span class="t">' + esc(p.name) + '</span>' + bar(p.pct) + '<span class="mut">' + p.pct + '%</span></div>';
+        }).join('') + '</div></div>';
+    },
+    tasks: function () {
+      var open = state.tasks.filter(function (t) { return !t.done; }), done = state.tasks.filter(function (t) { return t.done; });
+      return '<div class="head"><h2>Tasks</h2><button class="btn p" data-action="open-form" data-form="task">Add task</button></div>' +
+        '<div class="card">' + (open.length ? open.map(taskRow).join('') : '<div class="empty">No open tasks. Add one to get started.</div>') + '</div>' +
+        (done.length ? '<h3 class="mut" style="margin:20px 0 8px">Completed</h3><div class="card">' + done.map(taskRow).join('') + '</div>' : '');
+    },
+    projects: function () {
+      return '<div class="head"><h2>Projects</h2><button class="btn p" data-action="open-form" data-form="project">Add project</button></div>' +
+        '<div class="card">' + (state.projects.length ? state.projects.map(function (p) {
+          return '<div class="row"><span class="t">' + esc(p.name) + '</span>' + bar(p.pct) + '<span class="mut">' + p.pct + '%</span>' +
+            '<button class="btn s" data-action="adv-project" data-id="' + esc(p.id) + '"' + (p.pct >= 100 ? ' disabled' : '') + '>+10%</button>' +
+            '<button class="btn s d" data-action="del-project" data-id="' + esc(p.id) + '">Delete</button></div>';
+        }).join('') : '<div class="empty">No projects yet.</div>') + '</div>';
+    },
+    finance: function () {
+      var ms = months();
+      return '<div class="head"><h2>Finance</h2><button class="btn p" data-action="open-form" data-form="income">Log income</button></div>' +
+        '<p class="mut" style="margin-top:-6px">Tracks income and how each shilling is allocated. Allocation always equals income.</p>' +
+        (ms.length ? ms.map(function (m) {
+          var total = monthTotal(m), a = monthAlloc(m);
+          var sum = a.needs + a.savings + a.business + a.other;
+          return '<div class="card" style="margin-bottom:16px"><div class="head"><h3 style="margin:0">' + esc(monthLabel(m)) + '</h3><b>' + money(total) + '</b></div>' +
+            '<div class="seg">' + SPLIT.map(function (s) { return '<i style="width:' + (total ? a[s[0]] / total * 100 : 0) + '%;background:' + COLORS[s[0]] + '"></i>'; }).join('') + '</div>' +
+            SPLIT.map(function (s) {
+              return '<div class="row"><span style="width:10px;height:10px;border-radius:3px;background:' + COLORS[s[0]] + '"></span><span class="t">' + s[1] + '</span><b>' + money(a[s[0]]) + '</b></div>';
+            }).join('') +
+            '<div class="mut" style="margin-top:8px' + (sum === total ? '' : ';color:var(--bad)') + '">' + (sum === total ? 'Allocated in full: ' + money(sum) : 'Allocation mismatch') + '</div>' +
+            state.income.filter(function (i) { return i.month === m; }).map(function (i) {
+              return '<div class="row mut"><span class="t">' + esc(i.source) + '</span><span>' + money(i.amount) + '</span></div>';
+            }).join('') + '</div>';
+        }).join('') : '<div class="card empty">No income logged yet.</div>');
+    },
+    ideas: function () {
+      return '<div class="head"><h2>Ideas</h2><button class="btn p" data-action="open-form" data-form="idea">Capture idea</button></div>' +
+        '<div class="card">' + (state.ideas.length ? state.ideas.map(function (d) {
+          return '<div class="row"><span class="t">' + esc(d.text) + '</span><button class="btn s d" data-action="del-idea" data-id="' + esc(d.id) + '">Delete</button></div>';
+        }).join('') : '<div class="empty">No ideas captured yet.</div>') + '</div>';
+    },
+    goals: function () {
+      return '<div class="head"><h2>Goals</h2><button class="btn p" data-action="open-form" data-form="goal">Add goal</button></div>' +
+        '<div class="card">' + (state.goals.length ? state.goals.map(function (g) {
+          return '<div class="row"><span class="t">' + esc(g.name) + '</span>' + bar(g.pct) + '<span class="mut">' + g.pct + '%</span>' +
+            '<button class="btn s" data-action="adv-goal" data-id="' + esc(g.id) + '"' + (g.pct >= 100 ? ' disabled' : '') + '>+10%</button></div>';
+        }).join('') : '<div class="empty">No goals yet.</div>') + '</div>';
+    },
+    activity: function () {
+      return '<div class="head"><h2>Activity</h2><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-action="export">Export backup</button><button class="btn" data-action="import">Import</button><button class="btn d" data-action="reset">Reset</button></div></div>' +
+        '<div class="card">' + (state.activity.length ? state.activity.map(function (a) {
+          return '<div class="row"><span class="t">' + esc(a.text) + '</span><span class="mut">' + esc(new Date(a.at).toLocaleString('en-US', {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'})) + '</span></div>';
+        }).join('') : '<div class="empty">No activity yet.</div>') + '</div>';
+    }
+  };
+
+  function render() {
+    if (!views[state.view]) state.view = 'dashboard';
+    $('nav').innerHTML = VIEWS.map(function (v) {
+      return '<button class="nav' + (v[0] === state.view ? ' on' : '') + '" data-view="' + v[0] + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + ICONS[v[0]] + '</svg>' + v[1] + '</button>';
+    }).join('');
+    var label = VIEWS.filter(function (v) { return v[0] === state.view; })[0][1];
+    $('title').textContent = label;
+    try { $('main').innerHTML = views[state.view](); afterRender(); }
+    catch (e) {
+      console.error(e);
+      $('main').innerHTML = '<div class="card err">This section failed to render. Open Activity and choose Reset demo data, or clear site data for this page.</div>';
+    }
+  }
+
+  /* ---------- forms ---------- */
+  function field(name, label, type, extra) { return '<label for="f-' + name + '">' + label + '</label><input id="f-' + name + '" name="' + name + '" type="' + type + '" ' + (extra || '') + '>'; }
+  function select(name, label, opts, def) {
+    return '<label for="f-' + name + '">' + label + '</label><select id="f-' + name + '" name="' + name + '">' +
+      opts.map(function (o) { return '<option' + (o === def ? ' selected' : '') + '>' + o + '</option>'; }).join('') + '</select>';
+  }
+  var FORMS = {
+    task: {title:'Add task', submit:'Add task', html: function () {
+      return field('title', 'Task', 'text', 'required maxlength="120" autocomplete="off"') + select('due', 'Due', ['Today','Tomorrow','Later'], 'Today') + select('pri', 'Priority', ['High','Medium','Low'], 'Medium');
+    }, run: function (f) {
+      var title = (f.get('title') || '').trim(); if (!title) return false;
+      state.tasks.unshift({id:uid(), title:title, due:f.get('due'), pri:f.get('pri'), done:false});
+      commit('Task added', 'Added task: ' + title); return true;
+    }},
+    project: {title:'Add project', submit:'Add project', html: function () {
+      return field('name', 'Name', 'text', 'required maxlength="80" autocomplete="off"') + field('pct', 'Progress (%)', 'number', 'min="0" max="100" value="0"');
+    }, run: function (f) {
+      var name = (f.get('name') || '').trim(); if (!name) return false;
+      var pct = Math.min(100, Math.max(0, parseInt(f.get('pct'), 10) || 0));
+      state.projects.push({id:uid(), name:name, pct:pct});
+      commit('Project added', 'Added project: ' + name); return true;
+    }},
+    income: {title:'Log income', submit:'Log income', html: function () {
+      return field('source', 'Source', 'text', 'required maxlength="80" autocomplete="off"') + field('amount', 'Amount (KSh)', 'number', 'required min="1" step="1" inputmode="numeric"') + field('month', 'Month', 'month', 'required value="' + thisMonth() + '"');
+    }, run: function (f) {
+      var amount = parseInt(f.get('amount'), 10), source = (f.get('source') || '').trim(), month = f.get('month');
+      if (!source || !(amount > 0) || !/^\d{4}-\d{2}$/.test(month || '')) return false;
+      state.income.push({id:uid(), month:month, source:source, amount:amount, alloc:allocate(amount)});
+      commit('Income logged', 'Logged ' + money(amount) + ' for ' + monthLabel(month)); return true;
+    }},
+    idea: {title:'Capture idea', submit:'Capture idea', html: function () {
+      return field('text', 'Idea', 'text', 'required maxlength="160" autocomplete="off"');
+    }, run: function (f) {
+      var text = (f.get('text') || '').trim(); if (!text) return false;
+      state.ideas.unshift({id:uid(), text:text});
+      commit('Idea captured', 'Captured idea: ' + text); return true;
+    }},
+    goal: {title:'Add goal', submit:'Add goal', html: function () {
+      return field('name', 'Goal', 'text', 'required maxlength="120" autocomplete="off"') + field('pct', 'Progress (%)', 'number', 'min="0" max="100" value="0"');
+    }, run: function (f) {
+      var name = (f.get('name') || '').trim(); if (!name) return false;
+      var pct = Math.min(100, Math.max(0, parseInt(f.get('pct'), 10) || 0));
+      state.goals.push({id:uid(), name:name, pct:pct});
+      commit('Goal added', 'Added goal: ' + name); return true;
+    }}
+  };
+
+  function openForm(key) {
+    var F = FORMS[key]; if (!F) return;
+    $('modal').innerHTML = '<div class="sheet" role="dialog" aria-modal="true" aria-label="' + F.title + '"><h2>' + F.title + '</h2>' +
+      '<form data-form="' + key + '" novalidate>' + F.html() +
+      '<div class="acts"><button type="button" class="btn" data-action="close-modal">Cancel</button><button type="submit" class="btn p">' + F.submit + '</button></div></form></div>';
+    $('modal').hidden = false;
+    var first = $('modal').querySelector('input,select'); if (first) first.focus();
+  }
+  function closeModal() { $('modal').hidden = true; $('modal').innerHTML = ''; }
+  function setMenu(open) { document.body.classList.toggle('menu', open); }
+  function byId(list, id) { return list.filter(function (x) { return x.id === id; })[0]; }
+  function drop(list, id) { var i = list.findIndex(function (x) { return x.id === id; }); if (i > -1) list.splice(i, 1); }
+
+  /* ---------- actions ---------- */
+  var ACTIONS = {
+    'menu': function () { setMenu(!document.body.classList.contains('menu')); },
+    'close-menu': function () { setMenu(false); },
+    'open-form': function (el) { setMenu(false); openForm(el.dataset.form); },
+    'close-modal': closeModal,
+    'toggle-task': function (el) {
+      var t = byId(state.tasks, el.dataset.id); if (!t) return;
+      var rc = el.getBoundingClientRect(); t.done = !t.done; commit(t.done ? 'Task completed' : 'Task reopened', (t.done ? 'Completed: ' : 'Reopened: ') + t.title);
+      if (t.done) { burst(rc.left + rc.width / 2, rc.top + rc.height / 2, 70); if (t.due === 'Today' && state.tasks.filter(function (x) { return x.due === 'Today'; }).every(function (x) { return x.done; })) burst(innerWidth / 2, innerHeight / 3, 220); }
+    },
+    'del-task': function (el) { var t = byId(state.tasks, el.dataset.id); if (t) { drop(state.tasks, t.id); commit('Task deleted', 'Deleted task: ' + t.title); } },
+    'adv-project': function (el) {
+      var p = byId(state.projects, el.dataset.id); if (!p) return;
+      var o = p.pct; p.pct = Math.min(100, p.pct + 10); commit('Progress updated', p.name + ' is now at ' + p.pct + '%');
+      animBar(p.id, o, p.pct); if (p.pct >= 100) burst(innerWidth / 2, innerHeight / 3, 200);
+    },
+    'del-project': function (el) { var p = byId(state.projects, el.dataset.id); if (p) { drop(state.projects, p.id); commit('Project deleted', 'Deleted project: ' + p.name); } },
+    'del-idea': function (el) { var d = byId(state.ideas, el.dataset.id); if (d) { drop(state.ideas, d.id); commit('Idea deleted', 'Deleted idea: ' + d.text); } },
+    'adv-goal': function (el) {
+      var g = byId(state.goals, el.dataset.id); if (!g) return;
+      var o = g.pct; g.pct = Math.min(100, g.pct + 10); commit('Progress updated', g.name + ' is now at ' + g.pct + '%');
+      animBar(g.id, o, g.pct); if (g.pct >= 100) burst(innerWidth / 2, innerHeight / 3, 200);
+    },
+    'palette': openPal,
+    'export': function () {
+      var b = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'}), a = document.createElement('a');
+      a.href = URL.createObjectURL(b); a.download = 'kyro-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 500); toast('Backup downloaded');
+    },
+    'import': function () { $('imp').click(); },
+    'reset': function () {
+      if (!window.confirm('Replace all data with the demo data?')) return;
+      state = seed(); save(); render(); toast('Demo data restored');
+    }
+  };
+
+  function go(view) { state.view = view; setMenu(false); save(); render(); window.scrollTo(0, 0); }
+
+  // One delegated listener per event type. A failing handler is contained and cannot disable the others.
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-view],[data-action]') : null;
+    if (e.target.id === 'modal') { closeModal(); return; }
+    if (e.target.id === 'pal') { closePal(); return; }
+    var pi = e.target.closest ? e.target.closest('[data-pi]') : null;
+    if (pi) { palRun(+pi.getAttribute('data-pi')); return; }
+    if (!el) return;
+    try {
+      if (el.dataset.view) go(el.dataset.view);
+      else if (ACTIONS[el.dataset.action]) ACTIONS[el.dataset.action](el);
+    } catch (err) { console.error(err); toast('Something went wrong. Please try again.'); }
+  });
+  document.addEventListener('submit', function (e) {
+    var f = e.target.closest ? e.target.closest('form[data-form]') : null;
+    if (!f) return;
+    e.preventDefault();
+    try {
+      var F = FORMS[f.dataset.form];
+      if (F && F.run(new FormData(f))) closeModal(); else toast('Please fill in every field correctly.');
+    } catch (err) { console.error(err); toast('Could not save. Please try again.'); }
+  });
+  document.addEventListener('keydown', function (e) {
+    var tg = (e.target && e.target.tagName) || '';
+    if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); if ($('pal').hidden) openPal(); else closePal(); return; }
+    if (!$('pal').hidden) {
+      if (e.key === 'Escape') { closePal(); return; }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); palMove(e.key === 'ArrowDown' ? 1 : -1); return; }
+      if (e.key === 'Enter') { e.preventDefault(); palRun(palSel); }
+      return;
+    }
+    if (e.key === 'Escape') { closeModal(); setMenu(false); return; }
+    if ((e.key === 'n' || e.key === 'N') && !e.metaKey && !e.ctrlKey && !e.altKey && $('modal').hidden && !/INPUT|SELECT|TEXTAREA/.test(tg)) { e.preventDefault(); openForm('task'); }
+  });
+  document.addEventListener('pointermove', function (e) {
+    if (RM) return;
+    tx = e.clientX; ty = e.clientY; if (!gr) gr = requestAnimationFrame(glowTick);
+    var h = e.target.closest ? e.target.closest('.hx') : null;
+    if (h) {
+      var r = h.getBoundingClientRect();
+      h.style.setProperty('--ry', ((e.clientX - r.left) / r.width - 0.5) * 9 + 'deg');
+      h.style.setProperty('--rx', (0.5 - (e.clientY - r.top) / r.height) * 9 + 'deg');
+    }
+    var b = e.target.closest ? e.target.closest('.btn.p,.chip') : null;
+    if (b) { var q = b.getBoundingClientRect(); b.style.transform = 'translate(' + ((e.clientX - q.left - q.width / 2) * 0.22) + 'px,' + ((e.clientY - q.top - q.height / 2) * 0.3) + 'px)'; }
+  });
+  document.addEventListener('pointerout', function (e) {
+    var t = e.target.closest ? e.target.closest('.hx,.btn.p,.chip') : null;
+    if (!t || t.contains(e.relatedTarget)) return;
+    if (t.classList.contains('hx')) { t.style.setProperty('--rx', '0deg'); t.style.setProperty('--ry', '0deg'); } else t.style.transform = '';
+  });
+  document.addEventListener('input', function (e) { if (e.target.id === 'pq') palDraw(e.target.value); });
+  document.addEventListener('pointermove', function (e) {
+    var c = e.target.closest ? e.target.closest('.card') : null;
+    if (!c) return;
+    var r = c.getBoundingClientRect();
+    c.style.setProperty('--mx', (e.clientX - r.left) + 'px'); c.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  });
+  document.addEventListener('change', function (e) {
+    if (e.target.id !== 'imp' || !e.target.files[0]) return;
+    var inp = e.target, rd = new FileReader();
+    rd.onload = function () {
+      try { var d = JSON.parse(rd.result); if (!valid(d)) throw new Error('bad'); state = d; log('Imported a backup'); save(); render(); toast('Backup restored'); }
+      catch (x) { toast('That file is not a valid Kyro backup.'); }
+      inp.value = '';
+    };
+    rd.readAsText(inp.files[0]);
+  });
+
+  state = load();
+  render();
+})();
