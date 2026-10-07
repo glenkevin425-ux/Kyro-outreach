@@ -1,0 +1,18 @@
+const assert=require('assert');
+const {execute}=require('./executor');
+let state={tasks:[],memories:[],ideas:[],focus:null,plans:[]};
+let r=execute({type:'task.create',payload:{title:'Study structural analysis',due:'tomorrow',time:'19:00',priority:'high'}},state,1);
+assert.strictEqual(r.ok,true);assert.strictEqual(r.state.tasks[0].title,'Study structural analysis');
+r=execute({type:'task.update',payload:{title:'Study structural analysis',priority:'urgent'}},r.state,2);
+assert.strictEqual(r.state.tasks[0].priority,'urgent');
+r=execute({type:'task.complete',payload:{title:'Study structural analysis'}},r.state,3);
+assert.strictEqual(r.state.tasks[0].status,'done');
+r=execute({type:'memory.save',payload:{content:'Kcreatives uses Meta and TikTok ads'}},r.state,4);
+assert.strictEqual(r.state.memories[0].content,'Kcreatives uses Meta and TikTok ads');
+r=execute({type:'idea.create',payload:{content:'Build a client portal'}},r.state,5);
+assert.strictEqual(r.state.ideas[0],'Build a client portal');
+r=execute({type:'focus.start',payload:{duration:45}},r.state,6);
+assert.strictEqual(r.state.focus.duration,45);
+r=execute({type:'focus.stop',payload:{}},r.state,7);
+assert.strictEqual(r.state.focus,null);
+console.log('Kyro executor regression tests passed: 7');
