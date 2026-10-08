@@ -186,6 +186,7 @@
     $('tpill').style.transform = 'translateX(' + idx * 100 + '%)';
   }
   try { if (localStorage.getItem('kyro.rail')) document.body.classList.add('rail'); } catch (e) {}
+  try { if (document.fullscreenEnabled && $('fs')) $('fs').classList.add('ok'); } catch (e) {}
   var lastView = null;
   function ringsSvg(vals) {
     var R = [86, 68, 50, 32];
@@ -419,6 +420,7 @@
       animBar(g.id, o, g.pct); if (g.pct >= 100) burst(innerWidth / 2, innerHeight / 3, 200);
     },
     'palette': openPal,
+    'fullscreen': function () { if (document.fullscreenElement) { document.exitFullscreen(); return; } var r = document.documentElement.requestFullscreen ? document.documentElement.requestFullscreen() : null; if (r && r.catch) r.catch(function () { toast('Full screen is not available here'); }); setMenu(false); },
     'rail': function () {
       var on = document.body.classList.toggle('rail');
       try { localStorage.setItem('kyro.rail', on ? '1' : ''); } catch (e) {}
@@ -471,6 +473,7 @@
       return;
     }
     if (e.key === 'Escape') { closeModal(); setMenu(false); return; }
+    if ((e.key >= '1' && e.key <= '7') && !e.metaKey && !e.ctrlKey && !e.altKey && $('modal').hidden && !/INPUT|SELECT|TEXTAREA/.test(tg)) { go(VIEWS[+e.key - 1][0]); return; }
     if ((e.key === 'n' || e.key === 'N') && !e.metaKey && !e.ctrlKey && !e.altKey && $('modal').hidden && !/INPUT|SELECT|TEXTAREA/.test(tg)) { e.preventDefault(); openForm('task'); }
   });
   document.addEventListener('pointermove', function (e) {
