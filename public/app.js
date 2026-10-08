@@ -233,6 +233,10 @@
     [['task','Add task'],['project','Add project'],['income','Log income'],['idea','Capture idea'],['goal','Add goal']].forEach(function (a) {
       all.push({l:a[1], run:function () { openForm(a[0]); }});
     });
+    state.tasks.forEach(function (t) { all.push({l:'Task · ' + t.title, run:function () { go('tasks'); }}); });
+    state.projects.forEach(function (p) { all.push({l:'Project · ' + p.name + ' · ' + p.pct + '%', run:function () { go('projects'); }}); });
+    state.ideas.forEach(function (d) { all.push({l:'Idea · ' + d.text, run:function () { go('ideas'); }}); });
+    state.goals.forEach(function (g) { all.push({l:'Goal · ' + g.name + ' · ' + g.pct + '%', run:function () { go('goals'); }}); });
     q = q.toLowerCase();
     return all.filter(function (i) { return i.l.toLowerCase().indexOf(q) > -1; });
   }
