@@ -103,7 +103,7 @@
       '<button class="chk" data-action="toggle-task" data-id="' + esc(t.id) + '" aria-label="Toggle task"></button>' +
       '<span class="t">' + esc(t.title) + '</span><span class="tag ' + esc(t.pri) + '">' + esc(t.pri) + '</span>' +
       '<span class="mut">' + esc(t.due) + '</span>' +
-      '<button class="btn s d" data-action="del-task" data-id="' + esc(t.id) + '">Delete</button></div>';
+      '<button class="btn s" data-action="edit-task" data-id="' + esc(t.id) + '">Edit</button><button class="btn s d" data-action="del-task" data-id="' + esc(t.id) + '">Delete</button></div>';
   }
   function monthTotal(m) { return state.income.filter(function (i) { return i.month === m; }).reduce(function (a, i) { return a + i.amount; }, 0); }
   function monthAlloc(m) {
@@ -264,6 +264,7 @@
         '<div class="card kpi"><span>Average goal progress</span><b>' + avg(state.goals) + '%</b></div></div>' +
         '<div class="grid" style="margin-top:16px"><div class="card"><h3>Due today</h3>' +
         (today.length ? today.map(taskRow).join('') : '<div class="empty">Nothing left for today.</div>') + '</div>' +
+        '<div class="card"><h3>Focus</h3><div class="focusline"><b>' + (state.tasks.filter(function(t){return !t.done;}).length) + '</b><span class="mut">open tasks</span></div><div class="focusline"><b>' + avg(state.goals) + '%</b><span class="mut">goal progress</span></div><div class="focusline"><b>' + avg(state.projects) + '%</b><span class="mut">project progress</span></div></div>' +
         '<div class="card"><h3>Projects</h3>' + state.projects.map(function (p) {
           return '<div class="row"><span class="t">' + esc(p.name) + '</span>' + bar(p.pct) + '<span class="mut">' + p.pct + '%</span></div>';
         }).join('') + '</div></div>';
@@ -279,6 +280,7 @@
         '<div class="card">' + (state.projects.length ? state.projects.map(function (p) {
           return '<div class="row"><span class="t">' + esc(p.name) + '</span>' + bar(p.pct) + '<span class="mut">' + p.pct + '%</span>' +
             '<button class="btn s" data-action="adv-project" data-id="' + esc(p.id) + '"' + (p.pct >= 100 ? ' disabled' : '') + '>+10%</button>' +
+            '<button class="btn s" data-action="edit-project" data-id="' + esc(p.id) + '">Edit</button>' +
             '<button class="btn s d" data-action="del-project" data-id="' + esc(p.id) + '">Delete</button></div>';
         }).join('') : '<div class="empty">No projects yet.</div>') + '</div>';
     },
@@ -310,7 +312,7 @@
       return '<div class="head"><h2>Goals</h2><button class="btn p" data-action="open-form" data-form="goal">Add goal</button></div>' +
         '<div class="card">' + (state.goals.length ? state.goals.map(function (g) {
           return '<div class="row"><span class="t">' + esc(g.name) + '</span>' + bar(g.pct) + '<span class="mut">' + g.pct + '%</span>' +
-            '<button class="btn s" data-action="adv-goal" data-id="' + esc(g.id) + '"' + (g.pct >= 100 ? ' disabled' : '') + '>+10%</button></div>';
+            '<button class="btn s" data-action="adv-goal" data-id="' + esc(g.id) + '"' + (g.pct >= 100 ? ' disabled' : '') + '>+10%</button><button class="btn s" data-action="edit-goal" data-id="' + esc(g.id) + '">Edit</button></div>';
         }).join('') : '<div class="empty">No goals yet.</div>') + '</div>';
     },
     activity: function () {
@@ -342,51 +344,56 @@
       opts.map(function (o) { return '<option' + (o === def ? ' selected' : '') + '>' + o + '</option>'; }).join('') + '</select>';
   }
   var FORMS = {
-    task: {title:'Add task', submit:'Add task', html: function () {
-      return field('title', 'Task', 'text', 'required maxlength="120" autocomplete="off"') + select('due', 'Due', ['Today','Tomorrow','Later'], 'Today') + select('pri', 'Priority', ['High','Medium','Low'], 'Medium');
-    }, run: function (f) {
+    task: {title:'Add task', submit:'Add task', html: function (x) {
+      return field('title', 'Task', 'text', 'required maxlength="120" autocomplete="off" value="' + esc(x && x.title || '') + '"') + select('due', 'Due', ['Today','Tomorrow','Later'], x && x.due || 'Today') + select('pri', 'Priority', ['High','Medium','Low'], x && x.pri || 'Medium');
+    }, run: function (f, id) {
       var title = (f.get('title') || '').trim(); if (!title) return false;
-      state.tasks.unshift({id:uid(), title:title, due:f.get('due'), pri:f.get('pri'), done:false});
-      commit('Task added', 'Added task: ' + title); return true;
+      if (id) { var t = byId(state.tasks, id); if (!t) return false; t.title=title; t.due=f.get('due'); t.pri=f.get('pri'); commit('Task updated','Updated task: '+title); }
+      else { state.tasks.unshift({id:uid(), title:title, due:f.get('due'), pri:f.get('pri'), done:false}); commit('Task added', 'Added task: ' + title); }
+      return true;
     }},
-    project: {title:'Add project', submit:'Add project', html: function () {
-      return field('name', 'Name', 'text', 'required maxlength="80" autocomplete="off"') + field('pct', 'Progress (%)', 'number', 'min="0" max="100" value="0"');
-    }, run: function (f) {
-      var name = (f.get('name') || '').trim(); if (!name) return false;
-      var pct = Math.min(100, Math.max(0, parseInt(f.get('pct'), 10) || 0));
-      state.projects.push({id:uid(), name:name, pct:pct});
-      commit('Project added', 'Added project: ' + name); return true;
+    project: {title:'Add project', submit:'Add project', html: function (x) {
+      return field('name', 'Name', 'text', 'required maxlength="80" autocomplete="off" value="' + esc(x && x.name || '') + '">') + field('pct', 'Progress (%)', 'number', 'min="0" max="100" value="' + (x ? x.pct : 0) + '"');
+    }, run: function (f, id) {
+      var name=(f.get('name')||'').trim(); if(!name) return false;
+      var pct=Math.min(100,Math.max(0,parseInt(f.get('pct'),10)||0));
+      if(id){var p=byId(state.projects,id);if(!p)return false;p.name=name;p.pct=pct;commit('Project updated','Updated project: '+name);}
+      else{state.projects.push({id:uid(),name:name,pct:pct});commit('Project added','Added project: '+name);}
+      return true;
     }},
     income: {title:'Log income', submit:'Log income', html: function () {
       return field('source', 'Source', 'text', 'required maxlength="80" autocomplete="off"') + field('amount', 'Amount (KSh)', 'number', 'required min="1" step="1" inputmode="numeric"') + field('month', 'Month', 'month', 'required value="' + thisMonth() + '"');
     }, run: function (f) {
-      var amount = parseInt(f.get('amount'), 10), source = (f.get('source') || '').trim(), month = f.get('month');
-      if (!source || !(amount > 0) || !/^\d{4}-\d{2}$/.test(month || '')) return false;
-      state.income.push({id:uid(), month:month, source:source, amount:amount, alloc:allocate(amount)});
-      commit('Income logged', 'Logged ' + money(amount) + ' for ' + monthLabel(month)); return true;
+      var amount=parseInt(f.get('amount'),10),source=(f.get('source')||'').trim(),month=f.get('month');
+      if(!source||!(amount>0)||!/^\d{4}-\d{2}$/.test(month||''))return false;
+      state.income.push({id:uid(),month:month,source:source,amount:amount,alloc:allocate(amount)});
+      commit('Income logged','Logged '+money(amount)+' for '+monthLabel(month));return true;
     }},
     idea: {title:'Capture idea', submit:'Capture idea', html: function () {
-      return field('text', 'Idea', 'text', 'required maxlength="160" autocomplete="off"');
+      return field('text','Idea','text','required maxlength="160" autocomplete="off"');
     }, run: function (f) {
-      var text = (f.get('text') || '').trim(); if (!text) return false;
-      state.ideas.unshift({id:uid(), text:text});
-      commit('Idea captured', 'Captured idea: ' + text); return true;
+      var text=(f.get('text')||'').trim();if(!text)return false;
+      state.ideas.unshift({id:uid(),text:text});commit('Idea captured','Captured idea: '+text);return true;
     }},
-    goal: {title:'Add goal', submit:'Add goal', html: function () {
-      return field('name', 'Goal', 'text', 'required maxlength="120" autocomplete="off"') + field('pct', 'Progress (%)', 'number', 'min="0" max="100" value="0"');
-    }, run: function (f) {
-      var name = (f.get('name') || '').trim(); if (!name) return false;
-      var pct = Math.min(100, Math.max(0, parseInt(f.get('pct'), 10) || 0));
-      state.goals.push({id:uid(), name:name, pct:pct});
-      commit('Goal added', 'Added goal: ' + name); return true;
+    goal: {title:'Add goal', submit:'Add goal', html: function (x) {
+      return field('name','Goal','text','required maxlength="120" autocomplete="off" value="' + esc(x && x.name || '') + '">') + field('pct','Progress (%)','number','min="0" max="100" value="' + (x ? x.pct : 0) + '">');
+    }, run: function (f,id) {
+      var name=(f.get('name')||'').trim();if(!name)return false;
+      var pct=Math.min(100,Math.max(0,parseInt(f.get('pct'),10)||0));
+      if(id){var g=byId(state.goals,id);if(!g)return false;g.name=name;g.pct=pct;commit('Goal updated','Updated goal: '+name);}
+      else{state.goals.push({id:uid(),name:name,pct:pct});commit('Goal added','Added goal: '+name);}
+      return true;
     }}
   };
 
-  function openForm(key) {
+  function openForm(key, id) {
     var F = FORMS[key]; if (!F) return;
-    $('modal').innerHTML = '<div class="sheet" role="dialog" aria-modal="true" aria-label="' + F.title + '"><h2>' + F.title + '</h2>' +
-      '<form data-form="' + key + '" novalidate>' + F.html() +
-      '<div class="acts"><button type="button" class="btn" data-action="close-modal">Cancel</button><button type="submit" class="btn p">' + F.submit + '</button></div></form></div>';
+    var item = id ? byId(key === 'task' ? state.tasks : key === 'project' ? state.projects : state.goals, id) : null;
+    var title = id ? 'Edit ' + (key === 'task' ? 'task' : key === 'project' ? 'project' : 'goal') : F.title;
+    var submit = id ? 'Save changes' : F.submit;
+    $('modal').innerHTML = '<div class="sheet" role="dialog" aria-modal="true" aria-label="' + title + '"><h2>' + title + '</h2>' +
+      '<form data-form="' + key + '" data-edit-id="' + esc(id || '') + '" novalidate>' + F.html(item) +
+      '<div class="acts"><button type="button" class="btn" data-action="close-modal">Cancel</button><button type="submit" class="btn p">' + submit + '</button></div></form></div>';
     $('modal').hidden = false;
     var first = $('modal').querySelector('input,select'); if (first) first.focus();
   }
@@ -399,13 +406,16 @@
   var ACTIONS = {
     'menu': function () { setMenu(!document.body.classList.contains('menu')); },
     'close-menu': function () { setMenu(false); },
-    'open-form': function (el) { setMenu(false); openForm(el.dataset.form); },
+    'open-form': function (el) { setMenu(false); openForm(el.dataset.form, el.dataset.id); },
     'close-modal': closeModal,
     'toggle-task': function (el) {
       var t = byId(state.tasks, el.dataset.id); if (!t) return;
       var rc = el.getBoundingClientRect(); t.done = !t.done; commit(t.done ? 'Task completed' : 'Task reopened', (t.done ? 'Completed: ' : 'Reopened: ') + t.title);
       if (t.done) { burst(rc.left + rc.width / 2, rc.top + rc.height / 2, 70); if (t.due === 'Today' && state.tasks.filter(function (x) { return x.due === 'Today'; }).every(function (x) { return x.done; })) burst(innerWidth / 2, innerHeight / 3, 220); }
     },
+    'edit-task': function (el) { var t=byId(state.tasks,el.dataset.id); if(t) openForm('task',t.id); },
+    'edit-project': function (el) { var p=byId(state.projects,el.dataset.id); if(p) openForm('project',p.id); },
+    'edit-goal': function (el) { var g=byId(state.goals,el.dataset.id); if(g) openForm('goal',g.id); },
     'del-task': function (el) { var t = byId(state.tasks, el.dataset.id); if (t) { drop(state.tasks, t.id); commit('Task deleted', 'Deleted task: ' + t.title); } },
     'adv-project': function (el) {
       var p = byId(state.projects, el.dataset.id); if (!p) return;
@@ -460,7 +470,7 @@
     e.preventDefault();
     try {
       var F = FORMS[f.dataset.form];
-      if (F && F.run(new FormData(f))) closeModal(); else toast('Please fill in every field correctly.');
+      if (F && F.run(new FormData(f), f.dataset.editId || '')) closeModal(); else toast('Please fill in every field correctly.');
     } catch (err) { console.error(err); toast('Could not save. Please try again.'); }
   });
   document.addEventListener('keydown', function (e) {
