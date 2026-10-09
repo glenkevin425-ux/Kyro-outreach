@@ -99,7 +99,7 @@
   /* ---------- views ---------- */
   function bar(p) { return '<div class="bar"><i style="width:' + p + '%"></i></div>'; }
   function taskRow(t) {
-    return '<div class="row' + (t.done ? ' done' : '') + '">' +
+    return '<div class="row task-item' + (t.done ? ' done' : '') + '" data-task-title="' + esc(t.title.toLowerCase()) + '" data-task-due="' + esc(t.due) + '" data-task-pri="' + esc(t.pri) + '" data-task-done="' + (t.done ? '1' : '0') + '">' +
       '<button class="chk" data-action="toggle-task" data-id="' + esc(t.id) + '" aria-label="Toggle task"></button>' +
       '<span class="t">' + esc(t.title) + '</span><span class="tag ' + esc(t.pri) + '">' + esc(t.pri) + '</span>' +
       '<span class="mut">' + esc(t.due) + '</span>' +
@@ -276,8 +276,8 @@
     tasks: function () {
       var open = state.tasks.filter(function (t) { return !t.done; }), done = state.tasks.filter(function (t) { return t.done; });
       return '<div class="head"><h2>Tasks</h2><button class="btn p" data-action="open-form" data-form="task">Add task</button></div>' +
-        '<div class="card">' + (open.length ? open.map(taskRow).join('') : '<div class="empty">No open tasks. Add one to get started.</div>') + '</div>' +
-        (done.length ? '<h3 class="mut" style="margin:20px 0 8px">Completed</h3><div class="card">' + done.map(taskRow).join('') + '</div>' : '');
+        '<div class="task-tools"><input id="task-search" type="search" placeholder="Search tasks…" aria-label="Search tasks"><select id="task-due-filter" aria-label="Filter by due"><option value="all">All deadlines</option><option>Today</option><option>Tomorrow</option><option>Later</option></select><select id="task-pri-filter" aria-label="Filter by priority"><option value="all">All priorities</option><option>High</option><option>Medium</option><option>Low</option></select><select id="task-status-filter" aria-label="Filter by status"><option value="open">Open tasks</option><option value="done">Completed</option><option value="all">All status</option></select></div>' +
+        '<div class="card" id="task-list">' + (open.length ? open.map(taskRow).join('') : '<div class="empty">No open tasks. Add one to get started.</div>') + (done.length ? done.map(taskRow).join('') : '') + '</div><div id="task-filter-empty" class="empty" hidden>No tasks match these filters.</div>';
     },
     projects: function () {
       return '<div class="head"><h2>Projects</h2><button class="btn p" data-action="open-form" data-form="project">Add project</button></div>' +
@@ -507,7 +507,13 @@
     if (!t || t.contains(e.relatedTarget)) return;
     if (t.classList.contains('hx')) { t.style.setProperty('--rx', '0deg'); t.style.setProperty('--ry', '0deg'); } else t.style.transform = '';
   });
-  document.addEventListener('input', function (e) { if (e.target.id === 'pq') palDraw(e.target.value); });
+  function filterTasks() {
+    var q=($('task-search')&&$('task-search').value||'').toLowerCase().trim(), due=$('task-due-filter')&&$('task-due-filter').value||'all', pri=$('task-pri-filter')&&$('task-pri-filter').value||'all', status=$('task-status-filter')&&$('task-status-filter').value||'open', visible=0;
+    Array.prototype.forEach.call(document.querySelectorAll('.task-item'),function(row){var ok=(!q||row.getAttribute('data-task-title').indexOf(q)>-1)&&(due==='all'||row.getAttribute('data-task-due')===due)&&(pri==='all'||row.getAttribute('data-task-pri')===pri)&&(status==='all'||row.getAttribute('data-task-done')===(status==='done'?'1':'0'));row.hidden=!ok;if(ok)visible++;});
+    var empty=$('task-filter-empty');if(empty)empty.hidden=visible!==0;
+  }
+  document.addEventListener('input', function (e) { if (e.target.id === 'pq') palDraw(e.target.value); if (e.target.id === 'task-search') filterTasks(); });
+  document.addEventListener('change', function(e){if(e.target.id==='task-due-filter'||e.target.id==='task-pri-filter'||e.target.id==='task-status-filter')filterTasks();});
   var sheetEl = null, sy = 0, sdy = 0;
   document.addEventListener('touchstart', function (e) {
     var sh = e.target.closest ? e.target.closest('.sheet') : null;
