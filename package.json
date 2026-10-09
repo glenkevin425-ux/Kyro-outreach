@@ -1,0 +1,13 @@
+{
+  "name": "kyro-personal-command-center",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Local-first personal command center",
+  "scripts": {
+    "check": "node scripts/check.js",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}
