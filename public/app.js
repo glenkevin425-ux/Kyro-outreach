@@ -216,7 +216,7 @@
   function afterRender() {
     var fresh = lastView !== state.view; lastView = state.view;
     if (fresh) enter(); else $('main').classList.remove('enter');
-    pillTo(); drawTabs();
+    pillTo(); drawTabs(); if (state.view === 'tasks') filterTasks();
     Array.prototype.forEach.call(document.querySelectorAll('.ring'), function (r) {
       if (fresh) requestAnimationFrame(function () { requestAnimationFrame(function () { r.style.strokeDashoffset = r.getAttribute('data-to'); }); });
       else { r.style.transition = 'none'; r.style.strokeDashoffset = r.getAttribute('data-to'); }
