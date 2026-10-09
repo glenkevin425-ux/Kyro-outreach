@@ -1,102 +1,54 @@
 # Kyro — Personal Command Center
 
-Kyro is a **free, local-first personal command center** for one person.
+Kyro is a free, local-first personal command center for tasks, projects, finance, ideas and goals. The core runs in the browser without a backend, account, API key, required AI provider or runtime dependency.
 
-It is not an AI agent and does not require Anthropic, OpenAI, API keys, or an external inference service.
+## Features
 
-## The idea
+- Dashboard with daily overview and progress indicators.
+- Tasks with create/edit/complete/reopen/delete, search and filters.
+- Projects and goals with progress tracking.
+- Ideas with edit support.
+- Income allocation plus a separate expense ledger and monthly balance.
+- Workspace command palette and activity history.
+- Undo for deletions and a periodic local backup reminder.
+- Responsive mobile navigation, keyboard shortcuts and fullscreen control.
+- JSON backup export/import.
+- Baseline Content Security Policy and no external Google Fonts dependency.
 
-One place to see, organize, and manage the things that matter:
+## Run locally
 
-- **Dashboard** — your day at a glance
-- **Tasks** — work to do today and later
-- **Projects** — active projects and progress
-- **Finance** — income and simple financial overview
-- **Ideas** — capture ideas before they disappear
-- **Goals** — track bigger objectives
-- **Activity** — see what you have recently done
+You can open `public/index.html` directly, or serve the app from the repository root:
 
-## V1 principles
-
-1. **Free to run**
-2. **Personal by default**
-3. **No external AI dependency**
-4. **Simple and predictable**
-5. **Useful before clever**
-6. **Small changes over fragile rewrites**
-
-The first version stores its data locally in the browser using `localStorage`.
-
-## Architecture
-
-```text
-Kyro
-│
-├── Dashboard
-├── Tasks
-├── Projects
-├── Finance
-├── Ideas
-├── Goals
-└── Activity
-        │
-        ↓
-   Local browser state
+```bash
+python -m http.server 4173 --directory public
 ```
 
-There is deliberately no command parser, LLM brain, agent loop, MCP layer, or API requirement in V1.
+Then open `http://localhost:4173`.
 
-## Design direction
+## Validate changes
 
-**White + vibrant**
+Node.js is required for the dependency-free checks:
 
-The interface is intentionally clean, bright, premium, and information-dense without becoming cluttered.
+```bash
+node scripts/check.js
+```
 
-Visual references include Apple, Linear, Notion, Raycast, Stripe, and Vercel, but the UI is original.
+GitHub Actions runs these checks on pushes and pull requests. These are static checks, not a substitute for testing the app in a real browser.
 
-## Current branch
+## Data and privacy
 
-`kyro-personal-command-center`
+Kyro stores workspace data in this browser's `localStorage`. Data is not automatically synced across devices. Use **Activity → Export backup** to download a JSON backup and store it somewhere safe. Import restores a previous backup. Clearing browser site data can delete the local workspace.
 
-This branch is the new Personal Command Center build. `main` remains untouched.
+## Project files
 
-## V1 functionality
+- `public/index.html` — HTML shell and security metadata.
+- `public/styles.css` — styles and responsive layout.
+- `public/app.js` — state, rendering and interaction logic.
+- `scripts/check.js` — static checks.
+- `.github/workflows/ci.yml` — automated checks.
+- `PROJECT_BRIEF.md` — implementation constraints and test checklist.
+- `ROADMAP.md` — phased product plan.
 
-- Dashboard with live stats
-- Time-based greeting
-- Task creation
-- Task completion/reopening
-- Task priorities
-- Task due grouping
-- Project creation
-- Project progress
-- Income logging
-- Income totals
-- Idea capture/deletion
-- Goal creation
-- Goal progress
-- Activity history
-- Responsive mobile navigation
-- Local persistence
+## Design principles
 
-## Future possibilities
-
-Only after V1 proves useful:
-
-- calendar/deadline view
-- expenses and budgets
-- recurring tasks
-- study workspace
-- richer project pages
-- data export/import
-- cloud sync
-- authentication
-- optional AI features
-
-AI should remain an **optional layer**, never a requirement for the core product.
-
-## Development rule
-
-Build the boring, reliable version first.
-
-Do not reintroduce an agent architecture merely because it sounds more advanced.
+Build the reliable version first. Keep the interface light, responsive and premium; keep the data local by default; make AI optional rather than a dependency; ship small, testable improvements instead of fragile rewrites.
