@@ -33,7 +33,8 @@
 
   function seed() {
     return {
-      v: 2, view: 'dashboard',
+      v: 3, view: 'dashboard',
+      expenses: [],
       tasks: [
         {id:'t1', title:'Review structural analysis', due:'Today', pri:'High', done:false},
         {id:'t2', title:'Work on Kcreatives homepage', due:'Today', pri:'High', done:false},
@@ -63,7 +64,7 @@
   }
 
   function valid(s) {
-    return s && s.v === 2 && ['tasks','projects','income','ideas','goals','activity'].every(function (k) { return Array.isArray(s[k]); });
+    return s && s.v === 3 && ['tasks','projects','income','ideas','goals','activity','expenses'].every(function (k) { return Array.isArray(s[k]); });
   }
 
   var state;
@@ -71,7 +72,7 @@
   function load() {
     try {
       var raw = localStorage.getItem(KEY);
-      if (raw) { var s = JSON.parse(raw); if (valid(s)) return s; }
+      if (raw) { var s = JSON.parse(raw); if (s && s.v === 2 && ['tasks','projects','income','ideas','goals','activity'].every(function (k) { return Array.isArray(s[k]); })) { s.v = 3; s.expenses = []; try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { storageOK = false; } return s; } if (valid(s)) return s; }
     } catch (e) { storageOK = false; }
     return seed();
   }
@@ -106,6 +107,8 @@
       '<button class="btn s" data-action="edit-task" data-id="' + esc(t.id) + '">Edit</button><button class="btn s d" data-action="del-task" data-id="' + esc(t.id) + '">Delete</button></div>';
   }
   function monthTotal(m) { return state.income.filter(function (i) { return i.month === m; }).reduce(function (a, i) { return a + i.amount; }, 0); }
+  function monthExpenses(m) { return state.expenses.filter(function (e) { return e.month === m; }).reduce(function (a, e) { return a + e.amount; }, 0); }
+  function expenseCategoryLabel(k) { return ({needs:'Needs', savings:'Savings', business:'Business', other:'Other'})[k] || 'Other'; }
   function monthAlloc(m) {
     var o = {needs:0, savings:0, business:0, other:0};
     state.income.forEach(function (i) { if (i.month === m) for (var k in o) o[k] += i.alloc[k]; });
