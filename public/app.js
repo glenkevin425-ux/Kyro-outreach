@@ -81,20 +81,36 @@
     catch (e) { if (storageOK) { storageOK = false; toast('Storage is unavailable. Changes will not survive a refresh.'); } }
   }
 
-  function toast(msg) {
-    var t = document.createElement('div');
-    t.className = 'toast'; t.textContent = msg;
+  function toast(msg, actionLabel, action) {
+    var t = document.createElement('div'), timer;
+    t.className = 'toast'; t.appendChild(document.createTextNode(msg));
+    if (actionLabel && typeof action === 'function') {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'toast-action'; b.textContent = actionLabel;
+      b.addEventListener('click', function () { clearTimeout(timer); if (t.parentNode) t.parentNode.removeChild(t); action(); });
+      t.appendChild(b);
+    }
     $('toasts').appendChild(t);
-    setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 2600);
+    timer = setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, actionLabel ? 5000 : 2600);
   }
   function log(text) {
     state.activity.unshift({id:uid(), text:text, at:Date.now()});
     if (state.activity.length > 100) state.activity.length = 100;
   }
-  function commit(msg, activity) {
+  function commit(msg, activity, undoAction) {
     if (activity) log(activity);
     save(); render();
-    if (msg) toast(msg);
+    if (msg) toast(msg, undoAction ? 'Undo' : '', undoAction);
+  }
+  function removeWithUndo(list, id, msg, activity, label) {
+    var index = list.findIndex(function (x) { return x.id === id; });
+    if (index < 0) return;
+    var item = list[index];
+    list.splice(index, 1);
+    commit(msg, activity, function () {
+      list.splice(Math.min(index, list.length), 0, item);
+      commit('Deletion undone', 'Restored: ' + label);
+    });
   }
 
   /* ---------- views ---------- */
@@ -240,6 +256,8 @@
     state.projects.forEach(function (p) { all.push({l:'Project · ' + p.name + ' · ' + p.pct + '%', run:function () { go('projects'); }}); });
     state.ideas.forEach(function (d) { all.push({l:'Idea · ' + d.text, run:function () { go('ideas'); }}); });
     state.goals.forEach(function (g) { all.push({l:'Goal · ' + g.name + ' · ' + g.pct + '%', run:function () { go('goals'); }}); });
+    state.income.forEach(function (i) { all.push({l:'Income · ' + i.source + ' · ' + money(i.amount), run:function () { go('finance'); }}); });
+    state.expenses.forEach(function (x) { all.push({l:'Expense · ' + x.description + ' · ' + money(x.amount), run:function () { go('finance'); }}); });
     q = q.toLowerCase();
     return all.filter(function (i) { return i.l.toLowerCase().indexOf(q) > -1; });
   }
@@ -323,7 +341,7 @@
       return '<div class="head"><h2>Goals</h2><button class="btn p" data-action="open-form" data-form="goal">Add goal</button></div>' +
         '<div class="card">' + (state.goals.length ? state.goals.map(function (g) {
           return '<div class="row"><span class="t">' + esc(g.name) + '</span>' + bar(g.pct) + '<span class="mut">' + g.pct + '%</span>' +
-            '<button class="btn s" data-action="adv-goal" data-id="' + esc(g.id) + '"' + (g.pct >= 100 ? ' disabled' : '') + '>+10%</button><button class="btn s" data-action="edit-goal" data-id="' + esc(g.id) + '">Edit</button></div>';
+            '<button class="btn s" data-action="adv-goal" data-id="' + esc(g.id) + '"' + (g.pct >= 100 ? ' disabled' : '') + '>+10%</button><button class="btn s" data-action="edit-goal" data-id="' + esc(g.id) + '">Edit</button><button class="btn s d" data-action="del-goal" data-id="' + esc(g.id) + '">Delete</button></div>';
         }).join('') : '<div class="empty">No goals yet.</div>') + '</div>';
     },
     activity: function () {
@@ -406,8 +424,10 @@
     }}
   };
 
+  var modalReturnFocus = null;
   function openForm(key, id) {
     var F = FORMS[key]; if (!F) return;
+    modalReturnFocus = document.activeElement;
     var list = key === 'task' ? state.tasks : key === 'project' ? state.projects : key === 'goal' ? state.goals : key === 'income' ? state.income : key === 'expense' ? state.expenses : key === 'idea' ? state.ideas : [];
     var item = id ? byId(list, id) : null;
     var title = id ? 'Edit ' + ({task:'task',project:'project',goal:'goal',income:'income',expense:'expense',idea:'idea'}[key] || key) : F.title;
@@ -418,7 +438,12 @@
     $('modal').hidden = false;
     var first = $('modal').querySelector('input,select'); if (first) first.focus();
   }
-  function closeModal() { $('modal').hidden = true; $('modal').innerHTML = ''; }
+  function closeModal() {
+    $('modal').hidden = true; $('modal').innerHTML = '';
+    if (modalReturnFocus && document.contains(modalReturnFocus)) modalReturnFocus.focus();
+    else if ($('main')) $('main').focus();
+    modalReturnFocus = null;
+  }
   function setMenu(open) { document.body.classList.toggle('menu', open); }
   function byId(list, id) { return list.filter(function (x) { return x.id === id; })[0]; }
   function drop(list, id) { var i = list.findIndex(function (x) { return x.id === id; }); if (i > -1) list.splice(i, 1); }
@@ -440,16 +465,17 @@
     'edit-income': function (el) { var i=byId(state.income,el.dataset.id); if(i) openForm('income',i.id); },
     'edit-expense': function (el) { var e=byId(state.expenses,el.dataset.id); if(e) openForm('expense',e.id); },
     'edit-idea': function (el) { var d=byId(state.ideas,el.dataset.id); if(d) openForm('idea',d.id); },
-    'del-income': function (el) { var i=byId(state.income,el.dataset.id); if(i){drop(state.income,i.id);commit('Income deleted','Deleted income: '+i.source+' · '+money(i.amount));} },
-    'del-expense': function (el) { var e=byId(state.expenses,el.dataset.id); if(e){drop(state.expenses,e.id);commit('Expense deleted','Deleted expense: '+e.description+' · '+money(e.amount));} },
-    'del-task': function (el) { var t = byId(state.tasks, el.dataset.id); if (t) { drop(state.tasks, t.id); commit('Task deleted', 'Deleted task: ' + t.title); } },
+    'del-income': function (el) { var i=byId(state.income,el.dataset.id); if(i)removeWithUndo(state.income,i.id,'Income deleted','Deleted income: '+i.source+' · '+money(i.amount),i.source); },
+    'del-expense': function (el) { var e=byId(state.expenses,el.dataset.id); if(e)removeWithUndo(state.expenses,e.id,'Expense deleted','Deleted expense: '+e.description+' · '+money(e.amount),e.description); },
+    'del-task': function (el) { var t = byId(state.tasks, el.dataset.id); if (t) removeWithUndo(state.tasks,t.id,'Task deleted','Deleted task: '+t.title,t.title); },
     'adv-project': function (el) {
       var p = byId(state.projects, el.dataset.id); if (!p) return;
       var o = p.pct; p.pct = Math.min(100, p.pct + 10); commit('Progress updated', p.name + ' is now at ' + p.pct + '%');
       animBar(p.id, o, p.pct); if (p.pct >= 100) burst(innerWidth / 2, innerHeight / 3, 200);
     },
-    'del-project': function (el) { var p = byId(state.projects, el.dataset.id); if (p) { drop(state.projects, p.id); commit('Project deleted', 'Deleted project: ' + p.name); } },
-    'del-idea': function (el) { var d = byId(state.ideas, el.dataset.id); if (d) { drop(state.ideas, d.id); commit('Idea deleted', 'Deleted idea: ' + d.text); } },
+    'del-project': function (el) { var p = byId(state.projects, el.dataset.id); if (p) removeWithUndo(state.projects,p.id,'Project deleted','Deleted project: '+p.name,p.name); },
+    'del-idea': function (el) { var d = byId(state.ideas, el.dataset.id); if (d) removeWithUndo(state.ideas,d.id,'Idea deleted','Deleted idea: '+d.text,d.text); },
+    'del-goal': function (el) { var g = byId(state.goals, el.dataset.id); if (g) removeWithUndo(state.goals,g.id,'Goal deleted','Deleted goal: '+g.name,g.name); },
     'adv-goal': function (el) {
       var g = byId(state.goals, el.dataset.id); if (!g) return;
       var o = g.pct; g.pct = Math.min(100, g.pct + 10); commit('Progress updated', g.name + ' is now at ' + g.pct + '%');
@@ -465,7 +491,9 @@
     'export': function () {
       var b = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'}), a = document.createElement('a');
       a.href = URL.createObjectURL(b); a.download = 'kyro-backup-' + new Date().toISOString().slice(0, 10) + '.json';
-      document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 500); toast('Backup downloaded');
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 500);
+      try { localStorage.setItem('kyro.lastBackupAt', String(Date.now())); } catch (e) {}
+      toast('Backup downloaded');
     },
     'import': function () { $('imp').click(); },
     'reset': function () {
@@ -506,6 +534,14 @@
       if (e.key === 'Escape') { closePal(); return; }
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); palMove(e.key === 'ArrowDown' ? 1 : -1); return; }
       if (e.key === 'Enter') { e.preventDefault(); palRun(palSel); }
+      return;
+    }
+    if (!$('modal').hidden && e.key === 'Tab') {
+      var focusables = $('modal').querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[href],[tabindex]:not([tabindex="-1"])');
+      if (!focusables.length) { e.preventDefault(); return; }
+      var first = focusables[0], last = focusables[focusables.length - 1];
+      if (e.shiftKey && (document.activeElement === first || !$('modal').contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
       return;
     }
     if (e.key === 'Escape') { closeModal(); setMenu(false); return; }
