@@ -231,7 +231,7 @@ body{overscroll-behavior-y:none}
 
 /* Task filtering and finance ledger upgrades */
 .task-tools{display:grid;grid-template-columns:minmax(180px,1fr) repeat(3,minmax(130px,.55fr));gap:10px;margin:0 0 14px}
-.task-tools input,.task-tools select{width:100%;min-width:0;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);padding:11px 12px;font:inherit;font-size:13px;outline:none}
+.task-tools input,.task-tools select{width:100%;min-width:0;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);padding:11px 12px;font:inherit;font-size:13px;outline:none}
 .task-tools input:focus,.task-tools select:focus{border-color:var(--blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 12%,transparent)}
 .task-item[hidden],#task-filter-empty[hidden]{display:none}
 .finance-actions{display:flex;gap:8px;flex-wrap:wrap}
