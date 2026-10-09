@@ -408,8 +408,9 @@
 
   function openForm(key, id) {
     var F = FORMS[key]; if (!F) return;
-    var item = id ? byId(key === 'task' ? state.tasks : key === 'project' ? state.projects : state.goals, id) : null;
-    var title = id ? 'Edit ' + (key === 'task' ? 'task' : key === 'project' ? 'project' : 'goal') : F.title;
+    var list = key === 'task' ? state.tasks : key === 'project' ? state.projects : key === 'goal' ? state.goals : key === 'income' ? state.income : key === 'expense' ? state.expenses : key === 'idea' ? state.ideas : [];
+    var item = id ? byId(list, id) : null;
+    var title = id ? 'Edit ' + ({task:'task',project:'project',goal:'goal',income:'income',expense:'expense',idea:'idea'}[key] || key) : F.title;
     var submit = id ? 'Save changes' : F.submit;
     $('modal').innerHTML = '<div class="sheet" role="dialog" aria-modal="true" aria-label="' + title + '"><h2>' + title + '</h2>' +
       '<form data-form="' + key + '" data-edit-id="' + esc(id || '') + '" novalidate>' + F.html(item) +
@@ -436,6 +437,11 @@
     'edit-task': function (el) { var t=byId(state.tasks,el.dataset.id); if(t) openForm('task',t.id); },
     'edit-project': function (el) { var p=byId(state.projects,el.dataset.id); if(p) openForm('project',p.id); },
     'edit-goal': function (el) { var g=byId(state.goals,el.dataset.id); if(g) openForm('goal',g.id); },
+    'edit-income': function (el) { var i=byId(state.income,el.dataset.id); if(i) openForm('income',i.id); },
+    'edit-expense': function (el) { var e=byId(state.expenses,el.dataset.id); if(e) openForm('expense',e.id); },
+    'edit-idea': function (el) { var d=byId(state.ideas,el.dataset.id); if(d) openForm('idea',d.id); },
+    'del-income': function (el) { var i=byId(state.income,el.dataset.id); if(i){drop(state.income,i.id);commit('Income deleted','Deleted income: '+i.source+' · '+money(i.amount));} },
+    'del-expense': function (el) { var e=byId(state.expenses,el.dataset.id); if(e){drop(state.expenses,e.id);commit('Expense deleted','Deleted expense: '+e.description+' · '+money(e.amount));} },
     'del-task': function (el) { var t = byId(state.tasks, el.dataset.id); if (t) { drop(state.tasks, t.id); commit('Task deleted', 'Deleted task: ' + t.title); } },
     'adv-project': function (el) {
       var p = byId(state.projects, el.dataset.id); if (!p) return;
