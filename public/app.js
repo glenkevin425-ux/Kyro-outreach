@@ -606,9 +606,12 @@
 
   function checkBackupReminder() {
     try {
+      var now = Date.now(), interval = 14 * 24 * 60 * 60 * 1000;
       var last = parseInt(localStorage.getItem('kyro.lastBackupAt') || '0', 10);
-      if (!last || Date.now() - last > 14 * 24 * 60 * 60 * 1000) {
+      var reminded = parseInt(localStorage.getItem('kyro.backupReminderAt') || '0', 10);
+      if ((!last || now - last > interval) && (!reminded || now - reminded > interval)) {
         setTimeout(function () {
+          try { localStorage.setItem('kyro.backupReminderAt', String(Date.now())); } catch (e) {}
           toast('Keep your data safe with a recent backup.', 'Export backup', function () { ACTIONS.export(); });
         }, 1400);
       }
