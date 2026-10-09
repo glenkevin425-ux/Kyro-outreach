@@ -15,11 +15,12 @@ Kyro's product goal is a fast, private, local-first command center for student-f
 - Rate-limited backup reminder with a direct export action.
 - Baseline Content Security Policy and removal of the external Google Fonts dependency.
 - Dependency-free JavaScript, finance invariant and asset checks.
-- GitHub Actions workflow to run static checks on pushes and pull requests.
+- Playwright browser smoke tests for view navigation, modal focus, task deletion/undo, finance allocation and finance search.
+- GitHub Actions workflow to run static checks and browser smoke tests on pushes and pull requests.
 
 ### Still to verify or complete
 - Run the browser-level smoke checklist on desktop and phone-sized viewports.
-- Add automated browser tests for critical flows when the test harness is ready.
+- Confirm the first GitHub Actions run is green and fix any browser-test failures.
 - Audit keyboard-only use, focus order, labels, contrast and screen-reader announcements.
 - Verify storage quota failures and malformed backup handling in a browser.
 - Measure Lighthouse performance and accessibility scores rather than guessing.
