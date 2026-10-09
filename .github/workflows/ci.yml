@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  static-checks:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -15,5 +15,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Run dependency-free checks
-        run: node scripts/check.js
+      - name: Install test tooling
+        run: npm install --no-audit --no-fund
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run static checks
+        run: npm run check
+      - name: Run browser smoke tests
+        run: npm run test:e2e
