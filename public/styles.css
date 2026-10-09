@@ -228,3 +228,19 @@ html{-webkit-text-size-adjust:100%}
 *{-webkit-tap-highlight-color:transparent}
 button{touch-action:manipulation}
 body{overscroll-behavior-y:none}
+
+/* Task filtering and finance ledger upgrades */
+.task-tools{display:grid;grid-template-columns:minmax(180px,1fr) repeat(3,minmax(130px,.55fr));gap:10px;margin:0 0 14px}
+.task-tools input,.task-tools select{width:100%;min-width:0;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);padding:11px 12px;font:inherit;font-size:13px;outline:none}
+.task-tools input:focus,.task-tools select:focus{border-color:var(--blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 12%,transparent)}
+.task-item[hidden],#task-filter-empty[hidden]{display:none}
+.finance-actions{display:flex;gap:8px;flex-wrap:wrap}
+.finance-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.finance-summary>div{display:flex;flex-direction:column;gap:6px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--soft)}
+.finance-summary span{font-size:12px;color:var(--mut)}
+.finance-summary b{font-size:19px;letter-spacing:-.03em}
+.finance-summary .negative{color:var(--bad)}
+.finance-record{flex-wrap:wrap}
+.finance-record small{font-size:11px;font-weight:500}
+@media(max-width:820px){.task-tools{grid-template-columns:1fr 1fr}.task-tools input{grid-column:1/-1}.finance-summary b{font-size:17px}}
+@media(max-width:420px){.task-tools{grid-template-columns:1fr}.task-tools input{grid-column:auto}.finance-record{gap:8px}}
