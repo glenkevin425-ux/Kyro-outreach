@@ -115,7 +115,7 @@
     return o;
   }
   function months() {
-    var seen = {}; state.income.forEach(function (i) { seen[i.month] = 1; });
+    var seen = {}; state.income.forEach(function (i) { seen[i.month] = 1; }); state.expenses.forEach(function (e) { seen[e.month] = 1; });
     return Object.keys(seen).sort().reverse();
   }
   function avg(a) { return a.length ? Math.round(a.reduce(function (s, x) { return s + x.pct; }, 0) / a.length) : 0; }
@@ -293,10 +293,10 @@
     },
     finance: function () {
       var ms = months();
-      return '<div class="head"><h2>Finance</h2><button class="btn p" data-action="open-form" data-form="income">Log income</button></div>' +
-        '<p class="mut" style="margin-top:-6px">Tracks income and how each shilling is allocated. Allocation always equals income.</p>' +
+      return '<div class="head"><h2>Finance</h2><div class="finance-actions"><button class="btn" data-action="open-form" data-form="expense">Add expense</button><button class="btn p" data-action="open-form" data-form="income">Log income</button></div></div>' +
+        '<p class="mut" style="margin-top:-6px">Income allocations are separate from recorded expenses. Monthly balance is income minus expenses.</p>' +
         (ms.length ? ms.map(function (m) {
-          var total = monthTotal(m), a = monthAlloc(m);
+          var total = monthTotal(m), a = monthAlloc(m), spent = monthExpenses(m), balance = total - spent;
           var sum = a.needs + a.savings + a.business + a.other;
           return '<div class="card" style="margin-bottom:16px"><div class="head"><h3 style="margin:0">' + esc(monthLabel(m)) + '</h3><b>' + money(total) + '</b></div>' +
             '<div class="seg">' + SPLIT.map(function (s) { return '<i style="width:' + (total ? a[s[0]] / total * 100 : 0) + '%;background:' + COLORS[s[0]] + '"></i>'; }).join('') + '</div>' +
@@ -304,10 +304,14 @@
               return '<div class="row"><span style="width:10px;height:10px;border-radius:3px;background:' + COLORS[s[0]] + '"></span><span class="t">' + s[1] + '</span><b>' + money(a[s[0]]) + '</b></div>';
             }).join('') +
             '<div class="mut" style="margin-top:8px' + (sum === total ? '' : ';color:var(--bad)') + '">' + (sum === total ? 'Allocated in full: ' + money(sum) : 'Allocation mismatch') + '</div>' +
-            state.income.filter(function (i) { return i.month === m; }).map(function (i) {
-              return '<div class="row mut"><span class="t">' + esc(i.source) + '</span><span>' + money(i.amount) + '</span></div>';
-            }).join('') + '</div>';
-        }).join('') : '<div class="card empty">No income logged yet.</div>');
+            '<div class="finance-summary"><div><span>Expenses</span><b>' + money(spent) + '</b></div><div><span>Remaining</span><b class="' + (balance < 0 ? 'negative' : '') + '">' + money(balance) + '</b></div></div>' +
+            '<h4>Income records</h4>' + (state.income.filter(function (i) { return i.month === m; }).map(function (i) {
+              return '<div class="row finance-record"><span class="t">' + esc(i.source) + '</span><span>' + money(i.amount) + '</span><button class="btn s" data-action="edit-income" data-id="' + esc(i.id) + '">Edit</button><button class="btn s d" data-action="del-income" data-id="' + esc(i.id) + '">Delete</button></div>';
+            }).join('') || '<div class="empty">No income records for this month.</div>') +
+            '<h4>Expenses</h4>' + (state.expenses.filter(function (x) { return x.month === m; }).map(function (x) {
+              return '<div class="row finance-record"><span class="t">' + esc(x.description) + ' <small class="mut">' + esc(expenseCategoryLabel(x.category)) + '</small></span><span>' + money(x.amount) + '</span><button class="btn s" data-action="edit-expense" data-id="' + esc(x.id) + '">Edit</button><button class="btn s d" data-action="del-expense" data-id="' + esc(x.id) + '">Delete</button></div>';
+            }).join('') || '<div class="empty">No expenses recorded.</div>') + '</div>';
+        }).join('') : '<div class="card empty">No finance records yet. Add income or an expense to start.</div>');
     },
     ideas: function () {
       return '<div class="head"><h2>Ideas</h2><button class="btn p" data-action="open-form" data-form="idea">Capture idea</button></div>' +
