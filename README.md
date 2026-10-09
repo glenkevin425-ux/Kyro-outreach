@@ -27,13 +27,16 @@ Then open `http://localhost:4173`.
 
 ## Validate changes
 
-Node.js is required for the dependency-free checks:
+The app itself has no runtime dependencies. Browser tests use Playwright as a development-only dependency:
 
 ```bash
-node scripts/check.js
+npm install
+npm run check
+npx playwright install chromium
+npm run test:e2e
 ```
 
-GitHub Actions runs these checks on pushes and pull requests. These are static checks, not a substitute for testing the app in a real browser.
+GitHub Actions installs Chromium, runs the static checks, and runs the browser smoke suite on pushes and pull requests.
 
 ## Data and privacy
 
