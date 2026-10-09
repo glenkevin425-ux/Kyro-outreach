@@ -561,7 +561,7 @@
     if (e.target.id !== 'imp' || !e.target.files[0]) return;
     var inp = e.target, rd = new FileReader();
     rd.onload = function () {
-      try { var d = JSON.parse(rd.result); if (!valid(d)) throw new Error('bad'); state = d; log('Imported a backup'); save(); render(); toast('Backup restored'); }
+      try { var d = JSON.parse(rd.result); if (d && d.v === 2 && ['tasks','projects','income','ideas','goals','activity'].every(function (k) { return Array.isArray(d[k]); })) { d.v = 3; d.expenses = []; } if (!valid(d)) throw new Error('bad'); state = d; log('Imported a backup'); save(); render(); toast('Backup restored'); }
       catch (x) { toast('That file is not a valid Kyro backup.'); }
       inp.value = '';
     };
