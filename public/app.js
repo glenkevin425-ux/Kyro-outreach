@@ -604,6 +604,18 @@
     rd.readAsText(inp.files[0]);
   });
 
+  function checkBackupReminder() {
+    try {
+      var last = parseInt(localStorage.getItem('kyro.lastBackupAt') || '0', 10);
+      if (!last || Date.now() - last > 14 * 24 * 60 * 60 * 1000) {
+        setTimeout(function () {
+          toast('Keep your data safe with a recent backup.', 'Export backup', function () { ACTIONS.export(); });
+        }, 1400);
+      }
+    } catch (e) {}
+  }
+
   state = load();
   render();
+  checkBackupReminder();
 })();
