@@ -372,19 +372,28 @@
       else{state.projects.push({id:uid(),name:name,pct:pct});commit('Project added','Added project: '+name);}
       return true;
     }},
-    income: {title:'Log income', submit:'Log income', html: function () {
-      return field('source', 'Source', 'text', 'required maxlength="80" autocomplete="off"') + field('amount', 'Amount (KSh)', 'number', 'required min="1" step="1" inputmode="numeric"') + field('month', 'Month', 'month', 'required value="' + thisMonth() + '"');
-    }, run: function (f) {
+    income: {title:'Log income', submit:'Log income', html: function (x) {
+      return field('source', 'Source', 'text', 'required maxlength="80" autocomplete="off" value="' + esc(x && x.source || '') + '"') + field('amount', 'Amount (KSh)', 'number', 'required min="1" step="1" inputmode="numeric" value="' + (x ? x.amount : '') + '"') + field('month', 'Month', 'month', 'required value="' + (x ? esc(x.month) : thisMonth()) + '"');
+    }, run: function (f,id) {
       var amount=parseInt(f.get('amount'),10),source=(f.get('source')||'').trim(),month=f.get('month');
-      if(!source||!(amount>0)||!/^\d{4}-\d{2}$/.test(month||''))return false;
-      state.income.push({id:uid(),month:month,source:source,amount:amount,alloc:allocate(amount)});
-      commit('Income logged','Logged '+money(amount)+' for '+monthLabel(month));return true;
+      if(!source||!(amount>0)||! /^\d{4}-\d{2}$/.test(month||''))return false;
+      if(id){var i=byId(state.income,id);if(!i)return false;i.source=source;i.amount=amount;i.month=month;i.alloc=allocate(amount);commit('Income updated','Updated income: '+source+' · '+money(amount));}
+      else{state.income.push({id:uid(),month:month,source:source,amount:amount,alloc:allocate(amount)});commit('Income logged','Logged '+money(amount)+' for '+monthLabel(month));}return true;
     }},
-    idea: {title:'Capture idea', submit:'Capture idea', html: function () {
-      return field('text','Idea','text','required maxlength="160" autocomplete="off"');
-    }, run: function (f) {
+    expense: {title:'Add expense', submit:'Save expense', html: function (x) {
+      return field('description','Expense','text','required maxlength="100" autocomplete="off" value="'+esc(x&&x.description||'')+'"') + select('category','Category',['needs','savings','business','other'],x&&x.category||'needs') + field('amount','Amount (KSh)','number','required min="1" step="1" inputmode="numeric" value="'+(x?x.amount:'')+'"') + field('month','Month','month','required value="'+(x?esc(x.month):thisMonth())+'"');
+    }, run: function(f,id) {
+      var description=(f.get('description')||'').trim(),category=f.get('category'),amount=parseInt(f.get('amount'),10),month=f.get('month');
+      if(!description||['needs','savings','business','other'].indexOf(category)<0||!(amount>0)||! /^\d{4}-\d{2}$/.test(month||''))return false;
+      if(id){var e=byId(state.expenses,id);if(!e)return false;e.description=description;e.category=category;e.amount=amount;e.month=month;commit('Expense updated','Updated expense: '+description+' · '+money(amount));}
+      else{state.expenses.unshift({id:uid(),description:description,category:category,amount:amount,month:month});commit('Expense added','Added expense: '+description+' · '+money(amount));}return true;
+    }},
+    idea: {title:'Capture idea', submit:'Capture idea', html: function (x) {
+      return field('text','Idea','text','required maxlength="160" autocomplete="off" value="'+esc(x&&x.text||'')+'"');
+    }, run: function (f,id) {
       var text=(f.get('text')||'').trim();if(!text)return false;
-      state.ideas.unshift({id:uid(),text:text});commit('Idea captured','Captured idea: '+text);return true;
+      if(id){var d=byId(state.ideas,id);if(!d)return false;d.text=text;commit('Idea updated','Updated idea: '+text);}
+      else{state.ideas.unshift({id:uid(),text:text});commit('Idea captured','Captured idea: '+text);}return true;
     }},
     goal: {title:'Add goal', submit:'Add goal', html: function (x) {
       return field('name','Goal','text','required maxlength="120" autocomplete="off" value="' + esc(x && x.name || '') + '">') + field('pct','Progress (%)','number','min="0" max="100" value="' + (x ? x.pct : 0) + '">');
