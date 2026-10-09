@@ -108,7 +108,7 @@
   }
   function monthTotal(m) { return state.income.filter(function (i) { return i.month === m; }).reduce(function (a, i) { return a + i.amount; }, 0); }
   function monthExpenses(m) { return state.expenses.filter(function (e) { return e.month === m; }).reduce(function (a, e) { return a + e.amount; }, 0); }
-  function expenseCategoryLabel(k) { return ({needs:'Needs', savings:'Savings', business:'Business', other:'Other'})[k] || 'Other'; }
+  function expenseCategoryLabel(k) { return ({food:'Food',transport:'Transport',university:'University',business:'Business',personal:'Personal',bills:'Bills',other:'Other',needs:'Needs',savings:'Savings'})[k] || 'Other'; }
   function monthAlloc(m) {
     var o = {needs:0, savings:0, business:0, other:0};
     state.income.forEach(function (i) { if (i.month === m) for (var k in o) o[k] += i.alloc[k]; });
@@ -381,10 +381,10 @@
       else{state.income.push({id:uid(),month:month,source:source,amount:amount,alloc:allocate(amount)});commit('Income logged','Logged '+money(amount)+' for '+monthLabel(month));}return true;
     }},
     expense: {title:'Add expense', submit:'Save expense', html: function (x) {
-      return field('description','Expense','text','required maxlength="100" autocomplete="off" value="'+esc(x&&x.description||'')+'"') + select('category','Category',['needs','savings','business','other'],x&&x.category||'needs') + field('amount','Amount (KSh)','number','required min="1" step="1" inputmode="numeric" value="'+(x?x.amount:'')+'"') + field('month','Month','month','required value="'+(x?esc(x.month):thisMonth())+'"');
+      return field('description','Expense','text','required maxlength="100" autocomplete="off" value="'+esc(x&&x.description||'')+'"') + select('category','Category',['food','transport','university','business','personal','bills','other'],x&&x.category||'food') + field('amount','Amount (KSh)','number','required min="1" step="1" inputmode="numeric" value="'+(x?x.amount:'')+'"') + field('month','Month','month','required value="'+(x?esc(x.month):thisMonth())+'"');
     }, run: function(f,id) {
       var description=(f.get('description')||'').trim(),category=f.get('category'),amount=parseInt(f.get('amount'),10),month=f.get('month');
-      if(!description||['needs','savings','business','other'].indexOf(category)<0||!(amount>0)||! /^\d{4}-\d{2}$/.test(month||''))return false;
+      if(!description||['food','transport','university','business','personal','bills','other','needs','savings'].indexOf(category)<0||!(amount>0)||! /^\d{4}-\d{2}$/.test(month||''))return false;
       if(id){var e=byId(state.expenses,id);if(!e)return false;e.description=description;e.category=category;e.amount=amount;e.month=month;commit('Expense updated','Updated expense: '+description+' · '+money(amount));}
       else{state.expenses.unshift({id:uid(),description:description,category:category,amount:amount,month:month});commit('Expense added','Added expense: '+description+' · '+money(amount));}return true;
     }},
