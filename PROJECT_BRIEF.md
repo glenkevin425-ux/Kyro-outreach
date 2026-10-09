@@ -12,9 +12,12 @@ Kyro is a free, single-user, local-first command center for tasks, projects, fin
 - `public/styles.css`: responsive visual system and motion.
 - `public/app.js`: application state, views, forms, actions, rendering and local persistence.
 - `scripts/check.js`: dependency-free syntax and invariant checks.
-- `.github/workflows/ci.yml`: runs checks on pushes and pull requests.
+- `scripts/serve.js`: dependency-free static server for browser tests.
+- `tests/kyro.spec.js` and `playwright.config.js`: Playwright smoke suite.
+- `package.json`: development-only test tooling; nothing is required at runtime.
+- `.github/workflows/ci.yml`: runs static checks and browser tests on pushes and pull requests.
 
-Run locally by opening `public/index.html` or serving the `public` directory. Run `node scripts/check.js` before committing.
+Run locally by opening `public/index.html` or serving the `public` directory. Run `npm run check` before committing; run `npm run test:e2e` for browser smoke tests after installing dependencies and Chromium.
 
 ## Hard rules
 
