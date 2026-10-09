@@ -41,7 +41,7 @@ test('task can be created, deleted, and restored with Undo', async function ({ p
   await expect(row).toBeVisible();
   await row.getByRole('button', {name:'Delete'}).click();
   await expect(row).toHaveCount(0);
-  await page.locator('.toast-action', {hasText:'Undo'}).click();
+  await page.locator('.toast-action').filter({hasText:'Undo'}).click();
   await expect(page.locator('.task-item[data-task-title="smoke test undo task"]')).toBeVisible();
 });
 
