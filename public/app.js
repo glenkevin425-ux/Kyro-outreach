@@ -280,7 +280,7 @@
       var open = state.tasks.filter(function (t) { return !t.done; }), done = state.tasks.filter(function (t) { return t.done; });
       return '<div class="head"><h2>Tasks</h2><button class="btn p" data-action="open-form" data-form="task">Add task</button></div>' +
         '<div class="task-tools"><input id="task-search" type="search" placeholder="Search tasks…" aria-label="Search tasks"><select id="task-due-filter" aria-label="Filter by due"><option value="all">All deadlines</option><option>Today</option><option>Tomorrow</option><option>Later</option></select><select id="task-pri-filter" aria-label="Filter by priority"><option value="all">All priorities</option><option>High</option><option>Medium</option><option>Low</option></select><select id="task-status-filter" aria-label="Filter by status"><option value="open">Open tasks</option><option value="done">Completed</option><option value="all">All status</option></select></div>' +
-        '<div class="card" id="task-list">' + (open.length ? open.map(taskRow).join('') : '<div class="empty">No open tasks. Add one to get started.</div>') + (done.length ? done.map(taskRow).join('') : '') + '</div><div id="task-filter-empty" class="empty" hidden>No tasks match these filters.</div>';
+        '<div class="card" id="task-list">' + open.map(taskRow).join('') + done.map(taskRow).join('') + '</div><div id="task-filter-empty" class="empty" hidden>No tasks match these filters.</div>';
     },
     projects: function () {
       return '<div class="head"><h2>Projects</h2><button class="btn p" data-action="open-form" data-form="project">Add project</button></div>' +
